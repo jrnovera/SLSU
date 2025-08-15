@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+.input-style {
+  @apply border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring focus:border-blue-500;
+}
+.radio-style {
+  @apply flex items-center px-4 py-2 border border-gray-300 rounded-lg cursor-pointer transition;
+}
+.active-radio {
+  @apply bg-blue-50 border-blue-500 text-blue-700 font-medium;
+}
+
+@layer base {
+  header nav a,
+  header nav a:visited,
+  header nav a:hover,
+  header nav a:focus {
+    @apply no-underline;
+    text-decoration: none !important; /* beats any global rules */
+  }
+}
+
+.nav-link {
+  @apply no-underline;
+  text-decoration: none !important;
+}

@@ -1,0 +1,38 @@
+/* === visual styling (icons / labels) === */
+.tree a.person{
+  border:0; background:transparent; padding:0; text-decoration:none;
+  color:#111; display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.tree a.person .label{ font-size:12px; line-height:1.1; text-align:center; }
+.tree .icon.parentIcon{ font-size:56px; color:#000; }
+.tree .icon.midIcon{ font-size:48px; color:#000; }
+.tree .youIcon{ color:#ef4444; }
+.tree .youText{ color:#ef4444; font-weight:600; }
+
+/* === couple blocks (parents and you+spouse) === */
+.tree li.couple > .partners{
+  display:inline-flex; align-items:center; justify-content:center; gap:18px; position:relative;
+}
+.tree li.couple > .partners .marriage{
+  display:inline-block; width:36px; height:3px; background:#fbbf24; border-radius:9999px;
+}
+.tree li.couple.you-couple > .partners .marriage.small{ width:40px; }
+
+/* === match your yellow connectors for the classic lines === */
+.tree li::before, .tree li::after{ border-color:#fbbf24; }
+.tree ul ul::before{ border-color:#fbbf24; height:26px; }
+
+/* === children under spouse: custom connectors === */
+.family-classic .children-wrap{ position:relative; margin-top:10px; }
+.family-classic .children-row{
+  position:relative; display:flex; justify-content:center; gap:20px;
+  overflow-x:auto; padding:12px 4px 0;
+}
+.family-classic .child{ position:relative; display:flex; flex-direction:column; align-items:center; }
+.family-classic .line{ position:absolute; background:#fbbf24; display:block; }
+.family-classic .spine{ width:3px; }                    /* spouse ↓ children bar */
+.family-classic .child-bar{ height:3px; }               /* first ↔ last child */
+.family-classic .stub{ width:3px; height:8px; top:-8px; left:50%; transform:translateX(-50%); }
+
+/* clearfix (classic layout uses floats) */
+.tree:after, .tree ul:after{ content:""; display:block; clear:both; }

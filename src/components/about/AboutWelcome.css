@@ -1,0 +1,62 @@
+/* About Welcome Screen Styles */
+.about-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.about-welcome-content {
+  max-width: 600px;
+  padding: 40px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.about-welcome-content h1 {
+  color: #1a3b5d;
+  font-size: 32px;
+  margin-bottom: 20px;
+  position: relative;
+  display: inline-block;
+}
+
+.about-welcome-content h1:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(to right, #7FB3D5, #add8e6);
+}
+
+.about-welcome-content p {
+  color: #446688;
+  font-size: 18px;
+  line-height: 1.6;
+  margin-top: 30px;
+}
+
+/* Katutubo logo/icon */
+.about-welcome-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 30px;
+  background-color: #E5E4E2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.about-welcome-logo:before {
+  content: 'K';
+  font-size: 40px;
+  font-weight: bold;
+  color: #1a3b5d;
+}
