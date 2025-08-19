@@ -265,6 +265,36 @@ function IPFormModal({
             <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="col-span-9 input-style" />
           </div>
 
+          {/* Health Condition (aligned) */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Health Condition:</label>
+            <input
+              type="text"
+              name="healthCondition"
+              value={formData.healthCondition}
+              onChange={handleInputChange}
+              list="health-options"
+              placeholder="e.g., asthma, diabetes (type 'none' if none)"
+              className="col-span-9 input-style w-full"
+            />
+          </div>
+
+          {/* ✅ Household Members */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Household Members:</label>
+            <input
+              type="number"
+              name="householdMembers"
+              value={formData.householdMembers}
+              onChange={handleInputChange}
+              placeholder="e.g., 5"
+              min={0}
+              step={1}
+              className="col-span-9 input-style"
+              required
+            />
+          </div>
+
           {/* Contact Number */}
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Contact Number:</label>

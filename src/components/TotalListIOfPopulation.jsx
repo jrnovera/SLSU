@@ -13,6 +13,58 @@ function useDebouncedValue(value, delay = 200) {
   return v;
 }
 
+/* ---------- health helpers ---------- */
+const normalize = (v) => (v ?? '').toString().trim().toLowerCase();
+/** Returns true if record represents a specific condition (NOT “healthy/none”). */
+const hasHealthCondition = (health) => {
+  const h = normalize(health);
+  if (!h) return false; // empty → treat as no condition
+  const NO_CONDITION_SET = new Set([
+    'healthy',
+    'none',
+    'no health condition',
+    'no condition',
+    'n/a',
+    'na',
+    'good',
+  ]);
+  return !NO_CONDITION_SET.has(h);
+};
+
+/* ---------- employment / student helpers ---------- */
+const isEmptyOccupation = (val) => {
+  const s = normalize(val);
+  if (!s) return true;
+  return ['none', 'n/a', 'na', '-', 'wala'].includes(s);
+};
+
+const isStudentOccupation = (val) => {
+  if (!val) return false;
+  const s = normalize(val);
+  const keys = [
+    'student', 'estudyante', 'pupil', 'learner',
+    'junior high', 'senior high', 'jhs', 'shs',
+    'elementary student', 'college student', 'university student'
+  ];
+  return keys.some(k => s.includes(k));
+};
+
+const getAge = (p) => {
+  // prefer numeric age
+  if (typeof p?.age === 'number') return p.age;
+  if (p?.age && !isNaN(Number(p.age))) return Number(p.age);
+  // derive from dateOfBirth (string or Timestamp-like)
+  const dob = p?.dateOfBirth || p?.birthDate;
+  if (!dob) return null;
+  const d = typeof dob === 'object' && dob?.seconds ? new Date(dob.seconds * 1000) : new Date(dob);
+  if (isNaN(d)) return null;
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+  return age;
+};
+
 function TotalListIOfPopulation({ populationData = [], category = null }) {
   const location = useLocation();
 
@@ -42,14 +94,17 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
     setLoading(false);
   }, [populationData]);
 
+  /* ---------- page title from category ---------- */
   useEffect(() => {
-    if (!category) return;
+    if (!category) { setPageTitle('Total Population'); return; }
     let title = 'Total Population';
     if (category === 'male') title = 'Total Male Population';
     else if (category === 'female') title = 'Total Female Population';
-    else if (category === 'student') title = 'Total Students';
+    else if (category === 'students' || category === 'student') title = 'Total Students';
+    else if (category === 'not_attending_25_below') title = 'Not Attending School (≤25)';
     else if (category === 'unemployed') title = 'Total Unemployed';
-    else if (category === 'health_condition') title = 'With Health Condition';
+    else if (category === 'with_health') title = 'With Health Condition';
+    else if (category === 'no_health') title = 'No Health Condition';
     setPageTitle(title);
   }, [category]);
 
@@ -62,17 +117,30 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
     }
   }, [location.search, allBarangayOptions]);
 
-  // ---------- FILTERING (name + barangay + age if numeric) ----------
+  // ---------- FILTERING (name + barangay + age if numeric + category) ----------
   useEffect(() => {
     let filtered = [...populationData];
 
+    // category filter
     if (category) {
-      if (category === 'male') filtered = filtered.filter((p) => p.gender === 'Male');
-      else if (category === 'female') filtered = filtered.filter((p) => p.gender === 'Female');
-      else if (category === 'student') filtered = filtered.filter((p) => p.occupation === 'Student');
-      else if (category === 'unemployed') filtered = filtered.filter((p) => p.occupation === 'Unemployed');
-      else if (category === 'health_condition')
-        filtered = filtered.filter((p) => p.healthCondition && p.healthCondition !== 'None');
+      if (category === 'male') {
+        filtered = filtered.filter((p) => p.gender === 'Male');
+      } else if (category === 'female') {
+        filtered = filtered.filter((p) => p.gender === 'Female');
+      } else if (category === 'students' || category === 'student') {
+        filtered = filtered.filter((p) => isStudentOccupation(p.occupation));
+      } else if (category === 'not_attending_25_below') {
+        filtered = filtered.filter((p) => {
+          const age = getAge(p);
+          return age !== null && age <= 25 && !isStudentOccupation(p.occupation);
+        });
+      } else if (category === 'unemployed') {
+        filtered = filtered.filter((p) => isEmptyOccupation(p.occupation));
+      } else if (category === 'with_health') {
+        filtered = filtered.filter((p) => hasHealthCondition(p.healthCondition));
+      } else if (category === 'no_health') {
+        filtered = filtered.filter((p) => !hasHealthCondition(p.healthCondition));
+      }
     }
 
     const term = searchTerm.trim().toLowerCase();
@@ -104,7 +172,6 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
       return;
     }
 
-    // build name display from current dataset
     const nameSugs = Array.from(
       new Set(
         populationData
@@ -132,9 +199,9 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
     if (!item) return;
     if (item.type === 'barangay') {
       setSelectedBarangay(item.label);
-      setSearchTerm(''); // clear text when choosing barangay
+      setSearchTerm('');
     } else {
-      setSearchTerm(item.label); // set exact name
+      setSearchTerm(item.label);
     }
     setShowSug(false);
     setActiveIndex(-1);
@@ -235,9 +302,7 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
                   <li
                     key={`${s.type}-${s.label}-${i}`}
                     onMouseDown={(e) => { e.preventDefault(); selectSuggestion(s); }}
-                    className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${
-                      i === activeIndex ? 'bg-gray-100' : 'bg-white'
-                    }`}
+                    className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${i === activeIndex ? 'bg-gray-100' : 'bg-white'}`}
                   >
                     <span className="truncate">{s.label}</span>
                     <span className="ml-3 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-500">
@@ -324,7 +389,7 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
                       {person.dateOfBirth || 'N/A'}
                     </td>
                     <td className="px-5 py-3 align-middle whitespace-nowrap">
-                      {person.age || 'N/A'}
+                      {person.age ?? getAge(person) ?? 'N/A'}
                     </td>
                     <td className="px-5 py-3 align-middle whitespace-nowrap">
                       {person.gender || 'N/A'}
