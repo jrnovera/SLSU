@@ -57,37 +57,37 @@ const Navbar = () => {
           <nav className="flex items-center gap-6">
             <Link
               to="/"
-              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-blue-400 hover:text-white rounded-full group"
+              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
             >
               Home
-              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-blue-600 rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
+              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
             </Link>
 
             <a
               href="#"
               onClick={toggleAboutPanel}
-              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 no-un hover:bg-blue-400 hover:text-white rounded-full group"
+              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 no-un hover:bg-[#6998ab] hover:text-white rounded-full group"
             >
               About Us
-              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-blue-600 rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
+              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
             </a>
 
             {currentUser ? (
               <a
                 href="#"
                 onClick={() => setShowLogoutModal(true)}
-                className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-blue-400 hover:text-white rounded-full group"
+                className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
               >
                 Log Out
-                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-blue-600 rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
+                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
               </a>
             ) : (
               <Link
                 to="/login"
-                className="relative px-5 py-1.5 font-medium text-black transition-all duration-200 hover:bg-blue-400 hover:text-white rounded-full group"
+                className="relative px-5 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
               >
                 Login
-                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-blue-600 rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
+                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
               </Link>
             )}
           </nav>

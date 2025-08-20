@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import { allBarangays } from '../components/Brgylist';
 import IPFormModal from '../components/IPFormModal';
-import ViewOnlyProfileModal from '../components/ViewOnlyProfileModal';
+import ProfileViewModal from '../components/ProfileViewModal'; // ⬅️ use this modal
 import {
   collection,
   addDoc,
@@ -41,6 +41,7 @@ function SuperAdminDashboard() {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedIp, setSelectedIp] = useState(null);
 
+  // 🔵 ProfileViewModal state
   const [showProfileView, setShowProfileView] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -105,7 +106,9 @@ function SuperAdminDashboard() {
   const handleCloseForm = () => {
     setShowAddForm(false);
     setShowUpdateForm(false);
+    // close profile modal too
     setShowProfileView(false);
+    setProfileData(null);
   };
 
   const handleUpdate = (ip) => {
@@ -140,6 +143,7 @@ function SuperAdminDashboard() {
     }
   };
 
+  // 🔵 Open ProfileViewModal (pull fresh doc then show)
   const handleViewProfile = async (ip) => {
     try {
       setLoadingProfile(true);
@@ -148,30 +152,8 @@ function SuperAdminDashboard() {
 
       if (ipSnap.exists()) {
         const data = ipSnap.data();
-        const fullName =
-          ip.name ||
-          `${data.lastName || ''}, ${data.firstName || ''} ${data.middleName || ''}`
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        const transformedData = {
-          id: ip.id,
-          name: fullName,
-          dateOfBirth: data.dateOfBirth || 'Unknown',
-          age: data.age || 'Unknown',
-          gender: data.gender || 'Unknown',
-          civilStatus: data.civilStatus || 'Unknown',
-          educationLevel: data.educationLevel || 'Unknown',
-          occupation: data.occupation || 'Unknown',
-          healthCondition: data.healthCondition || 'None',
-          barangay: data.barangay || '',
-          contactNumber: data.contactNumber || '',
-          tribe: data.tribe || 'Unknown',
-          address: data.address || '',
-          image: data.image || null,
-        };
-
-        setProfileData(transformedData);
+        // pass the raw record expected by ProfileViewModal
+        setProfileData({ id: ip.id, ...data });
         setShowProfileView(true);
       }
     } catch (error) {
@@ -284,7 +266,7 @@ function SuperAdminDashboard() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Left: Title + Controls */}
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-extrabold text-black">
+              <h2 style={{ color: '#194d62' }} className="text-xl font-extrabold">
                 {selectedBarangay ? `Barangay ${selectedBarangay.name}` : 'All Barangays'}
               </h2>
 
@@ -303,7 +285,7 @@ function SuperAdminDashboard() {
 
               <button
                 onClick={handleAdd}
-                className="bg-[#40A2E3] text-white font-bold text-sm px-6 py-2 rounded-sm hover:bg-[#3497da] transition"
+                className="bg-[#194d62] text-white font-bold text-sm px-6 py-2 rounded-sm hover:bg-[#3497da] transition"
               >
                 Add IP
               </button>
@@ -359,7 +341,7 @@ function SuperAdminDashboard() {
         <div className="bg-white rounded-xl shadow mb-4 overflow-hidden border border-gray-300">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-800">{headerTitle}</h2>
+            <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
             {hasSearch && (
               <p className="mt-1 text-sm text-gray-500">
                 {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
@@ -392,19 +374,19 @@ function SuperAdminDashboard() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleViewProfile(ip)}
-                        className="bg-blue-500 text-white text-sm px-3 py-1 rounded hover:bg-blue-600"
+                        className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded hover:bg-[#194d62]"
                       >
                         View
                       </button>
                       <button
                         onClick={() => handleUpdate(ip)}
-                        className="text-sm text-gray-700 hover:text-yellow-500"
+                        className="bg-[#6998ab] text-sm px-3 py-1 text-white rounded hover:bg-[#194d62]"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDelete(ip)}
-                        className="bg-red-500 text-white text-sm px-3 py-1 rounded hover:bg-red-600"
+                        className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded hover:bg-[#194d62]"
                       >
                         Delete
                       </button>
@@ -431,12 +413,12 @@ function SuperAdminDashboard() {
         initialData={selectedIp}
         isEditing={true}
       />
-      <ViewOnlyProfileModal
-        open={showProfileView && !!profileData}
+
+      {/* 🔵 ProfileViewModal instead of ViewOnlyProfileModal */}
+      <ProfileViewModal
+        isOpen={showProfileView && !!profileData}
         onClose={handleCloseForm}
-        profile={profileData}
-        loading={loadingProfile}
-        title="Indigenous Person Profile"
+        person={profileData}
       />
     </div>
   );

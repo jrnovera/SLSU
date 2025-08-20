@@ -193,7 +193,7 @@ function Brgylist({ onBarangaySelect = null }) {
 
             <div
               onClick={() => handleSeeDetails(barangay)}
-              className="mt-3 flex justify-between items-center bg-[#2b78c6] hover:bg-[#1a5c9e] cursor-pointer rounded-full px-4 py-2 text-white text-[13px] font-semibold transition"
+              className="mt-3 flex justify-between items-center bg-[#406882] hover:bg-[#062937] cursor-pointer rounded-full px-4 py-2 text-white text-[13px] font-semibold transition"
             >
               <span>See Details</span>
               <img src={arrowIcon} alt="arrow" className="w-[14px] h-[14px]" />
