@@ -6,7 +6,7 @@ import returnIcon from "../assets/icons/return.png"; // back icon
 /** Figma tokens */
 const BLUE = "#7cafca";      // primary blue
 const TILE_GRAY = "#c6c6c6"; // muted right tile bg
-const TEXT_BLUE = "#3D6D98";
+const TEXT_BLUE = "#194d62";
 
 export default function HealthCategoryModal({
   open,

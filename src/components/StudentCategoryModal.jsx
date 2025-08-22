@@ -4,9 +4,9 @@ import notAttendingIcon from "../assets/icons/not-attending.png";
 import returnIcon from "../assets/icons/return.png";
 
 /** Figma tokens */
-const BLUE = "#448AC7";
-const TILE_GRAY = "#E6E6E6";
-const TEXT_BLUE = "#3D6D98";
+const BLUE = "#7cafca";
+const TILE_GRAY = "#c6c6c6";
+const TEXT_BLUE = "#194d62";
 
 export default function StudentCategoryModal({
   open,
@@ -94,8 +94,8 @@ export default function StudentCategoryModal({
               style={{ backgroundColor: BLUE, boxShadow: "0 8px 20px rgba(43,120,198,.25)" }}
             >
               <img src={studentIcon} alt="" className="h-12 w-12 object-contain" />
-              <div className="mt-3 text-sm font-semibold text-white">STUDENTS</div>
-              <div className="mt-2 text-2xl font-bold text-white">{counts.students}</div>
+              <div className="mt-3 text-sm font-semibold text-black">STUDENTS</div>
+              <div className="mt-2 text-2xl font-bold text-black">{counts.students}</div>
             </div>
 
             {/* NOT ATTENDING SCHOOL (≤25) */}
@@ -113,12 +113,12 @@ export default function StudentCategoryModal({
                 className="h-12 w-12 object-contain opacity-80"
                 style={{ filter: "grayscale(1)" }}
               />
-              <div className="mt-3 text-[12px] font-semibold text-center" style={{ color: TEXT_BLUE, lineHeight: 1.1 }}>
+              <div className="mt-3 text-[12px] font-semibold text-center text-black" style={{ lineHeight: 1.1 }}>
                 NOT ATTENDING SCHOOL
                 <br />
                 (25 years old below)
               </div>
-              <div className="mt-2 text-2xl font-bold" style={{ color: TEXT_BLUE }}>
+              <div className="mt-2 text-2xl font-bold text-black">
                 {counts.notAttending25Below}
               </div>
             </div>
