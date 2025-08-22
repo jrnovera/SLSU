@@ -20,13 +20,13 @@ function Homepage() {
           {/* Left Side: Stats + Recent Activities */}
           <div className="space-y-6">
             <h2 className="text-xl font-bold text-[#5a78aa]">Community Statistics</h2>
-            <div className="bg-white rounded-3xl p-6 shadow-md">
+            <div className="bg-[#f0eee2] rounded-3xl p-6 shadow-md">
               <CommunityStats />
             </div>
 
             <div>
               <h2 className="text-xl font-bold text-[#5a78aa] mb-2">Recent Activities</h2>
-              <div className="bg-white rounded-3xl p-4 shadow-md">
+              <div className="bg-[#f0eee2] rounded-3xl p-4 shadow-md">
                 <RecentActivities />
               </div>
             </div>

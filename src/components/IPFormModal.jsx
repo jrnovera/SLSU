@@ -2,17 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { allBarangays } from "./Brgylist";
 import { serverTimestamp } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import CameraCaptureModal from "./CameraCaptureModal"; // ⬅️ new
+import CameraCaptureModal from "./CameraCaptureModal"; // ⬅️ camera modal
 
-// default structure for family tree (ensures same fields in Add & Update)
 const FAMILY_DEFAULT = {
   grandfather: "",
   grandmother: "",
   father: "",
   mother: "",
-  siblings: "", // shown as comma string in the form
+  siblings: "",
   spouse: "",
-  children: "", // shown as comma string in the form
+  children: "",
 };
 
 function IPFormModal({
@@ -53,10 +52,13 @@ function IPFormModal({
   // camera modal
   const [showCameraModal, setShowCameraModal] = useState(false);
 
+  // submit guard
+  const [isSaving, setIsSaving] = useState(false);
+
   // blob url cleanup
   const objectUrlRef = useRef(null);
 
-  // helpers
+  /* helpers */
   const calculateAge = (dob) => {
     if (!dob) return "";
     const birthDate = new Date(dob);
@@ -70,10 +72,7 @@ function IPFormModal({
 
   const toArrayFromCommaString = (val) =>
     typeof val === "string"
-      ? val
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
+      ? val.split(",").map((s) => s.trim()).filter(Boolean)
       : Array.isArray(val)
       ? val
       : [];
@@ -86,23 +85,19 @@ function IPFormModal({
     return v;
   };
 
-  // prefill (edit) + selected barangay
+  /* prefill (edit) + selected barangay */
   useEffect(() => {
     if (isEditing && initialData) {
       const ft = { ...FAMILY_DEFAULT, ...(initialData.familyTree || {}) };
       const familyTreeForForm = {
         ...ft,
-        siblings: Array.isArray(ft.siblings)
-          ? ft.siblings.join(", ")
-          : ft.siblings ?? "",
-        children: Array.isArray(ft.children)
-          ? ft.children.join(", ")
-          : ft.children ?? "",
+        siblings: Array.isArray(ft.siblings) ? ft.siblings.join(", ") : (ft.siblings ?? ""),
+        children: Array.isArray(ft.children) ? ft.children.join(", ") : (ft.children ?? ""),
       };
 
       const computedAge = initialData.dateOfBirth
         ? calculateAge(initialData.dateOfBirth)
-        : initialData.age ?? "";
+        : (initialData.age ?? "");
 
       setFormData((prev) => ({
         ...prev,
@@ -119,21 +114,20 @@ function IPFormModal({
     }
   }, [isEditing, initialData, selectedBarangay]);
 
-  // lock body scroll while modal open
+  /* lock body scroll while modal open */
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    return () => { document.body.style.overflow = "auto"; };
   }, [isOpen]);
 
-  // cleanup blob url on unmount
+  /* cleanup blob url on unmount */
   useEffect(() => {
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     };
   }, []);
 
+  /* handlers */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === "dateOfBirth") {
@@ -162,7 +156,7 @@ function IPFormModal({
     }));
   };
 
-  // ---------- FILE UPLOAD ----------
+  /* FILE UPLOAD */
   const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     setUploadError("");
@@ -194,64 +188,67 @@ function IPFormModal({
     setPhotoFile(null);
     setPhotoPreview("");
     setUploadError("");
-    // keep formData.photoURL if editing and user had an existing url; clearing preview only clears selected new photo
+    // Keep formData.photoURL (existing) intact so edit still has previous photo unless you capture a new one.
   };
 
-  // ---------- SUBMIT ----------
+  /* SUBMIT */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSaving) return;
 
-    const normalizedFamily = {
-      ...formData.familyTree,
-      siblings: toArrayFromCommaString(formData.familyTree.siblings),
-      children: toArrayFromCommaString(formData.familyTree.children),
-    };
+    setUploadError("");
+    setIsSaving(true);
 
-    const normalizedAge =
-      formData.age === "" || formData.age === null ? null : Number(formData.age);
-    const normalizedHousehold =
-      formData.householdMembers === "" || formData.householdMembers === null
-        ? null
-        : Number(formData.householdMembers);
+    try {
+      const normalizedFamily = {
+        ...formData.familyTree,
+        siblings: toArrayFromCommaString(formData.familyTree.siblings),
+        children: toArrayFromCommaString(formData.familyTree.children),
+      };
 
-    // Upload photo if new file selected
-    let photoURL = formData.photoURL || "";
-    if (photoFile) {
-      try {
-        const storage = getStorage();
-        const ext = (photoFile.name.split(".").pop() || "jpg").toLowerCase();
-        const safeFirst = (formData.firstName || "ip")
-          .replace(/\s+/g, "_")
-          .toLowerCase();
-        const safeLast = (formData.lastName || "record")
-          .replace(/\s+/g, "_")
-          .toLowerCase();
-        const path = `ip_photos/${Date.now()}_${safeLast}_${safeFirst}.${ext}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, photoFile);
-        photoURL = await getDownloadURL(storageRef);
-      } catch (err) {
-        console.error("Photo upload failed:", err);
-        setUploadError(
-          "Upload failed. You can submit again or save without a new photo."
-        );
-        // proceed with existing photoURL (if any)
+      const normalizedAge =
+        formData.age === "" || formData.age === null ? null : Number(formData.age);
+
+      const normalizedHousehold =
+        formData.householdMembers === "" || formData.householdMembers === null
+          ? null
+          : Number(formData.householdMembers);
+
+      // Upload photo if new file selected
+      let photoURL = formData.photoURL || "";
+      if (photoFile) {
+        try {
+          const storage = getStorage();
+          const ext = (photoFile.name.split(".").pop() || "jpg").toLowerCase();
+          const safeFirst = (formData.firstName || "ip").replace(/\s+/g, "_").toLowerCase();
+          const safeLast = (formData.lastName || "record").replace(/\s+/g, "_").toLowerCase();
+          const path = `ip_photos/${Date.now()}_${safeLast}_${safeFirst}.${ext}`;
+          const storageRef = ref(storage, path);
+          await uploadBytes(storageRef, photoFile);
+          photoURL = await getDownloadURL(storageRef);
+        } catch (err) {
+          console.error("Photo upload failed:", err);
+          // Don’t block the update — keep existing photoURL if any
+          setUploadError("Upload failed. You can submit again or save without a new photo.");
+        }
       }
+
+      const payload = {
+        ...formData,
+        contactNumber: normalizePhone(formData.contactNumber || ""),
+        age: normalizedAge,
+        householdMembers: normalizedHousehold,
+        dateOfBirth: formData.dateOfBirth || null,
+        familyTree: normalizedFamily,
+        photoURL: photoURL || null,
+        updatedAt: serverTimestamp(),
+        ...(isEditing ? {} : { createdAt: serverTimestamp() }),
+      };
+
+      await onSubmit(payload); // parent handles add/update + closing modal
+    } finally {
+      setIsSaving(false);
     }
-
-    const payload = {
-      ...formData,
-      contactNumber: normalizePhone(formData.contactNumber || ""),
-      age: normalizedAge,
-      householdMembers: normalizedHousehold,
-      dateOfBirth: formData.dateOfBirth || null,
-      familyTree: normalizedFamily,
-      photoURL: photoURL || null,
-      updatedAt: serverTimestamp(),
-      ...(isEditing ? {} : { createdAt: serverTimestamp() }),
-    };
-
-    await onSubmit(payload);
   };
 
   if (!isOpen) return null;
@@ -271,39 +268,15 @@ function IPFormModal({
           {isEditing ? "Edit IP Information" : "Add New Indigenous Person"}
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* noValidate stops silent HTML5 blocking; we validate in JS */}
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* Name */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Name:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Name:</label>
             <div className="col-span-9 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Last Name"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                required
-                className="input-style"
-              />
-              <input
-                type="text"
-                name="firstName"
-                placeholder="First Name"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                required
-                className="input-style"
-              />
-              <input
-                type="text"
-                name="middleName"
-                placeholder="Middle Name"
-                value={formData.middleName}
-                onChange={handleInputChange}
-                className="input-style"
-              />
+              <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleInputChange} required className="input-style" />
+              <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleInputChange} required className="input-style" />
+              <input type="text" name="middleName" placeholder="Middle Name" value={formData.middleName} onChange={handleInputChange} className="input-style" />
             </div>
           </div>
 
@@ -315,12 +288,8 @@ function IPFormModal({
               <div className="flex flex-wrap items-center gap-6">
                 {/* Avatar preview */}
                 <div className="relative h-24 w-24 rounded-full overflow-hidden ring-2 ring-slate-200 bg-slate-100 flex items-center justify-center">
-                  {photoPreview || formData.photoURL ? (
-                    <img
-                      src={photoPreview || formData.photoURL}
-                      alt="Preview"
-                      className="h-full w-full object-cover"
-                    />
+                  {(photoPreview || formData.photoURL) ? (
+                    <img src={photoPreview || formData.photoURL} alt="Preview" className="h-full w-full object-cover" />
                   ) : (
                     <span className="text-xs text-gray-400">No photo</span>
                   )}
@@ -330,36 +299,17 @@ function IPFormModal({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {/* Custom upload button + hidden file input */}
-                    <label
-                      htmlFor="ip-photo-input"
-                      className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
-                    >
+                    <label htmlFor="ip-photo-input" className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
                       Upload
-                      <input
-                        id="ip-photo-input"
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handlePhotoChange}
-                        className="sr-only"
-                      />
+                      <input id="ip-photo-input" type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" />
                     </label>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowCameraModal(true)}
-                      style={{ fontSize: 13, lineHeight: 1, borderRadius: "0.375rem" }}
-                      className="rounded-md bg-[#6998ab] px-3 font-medium text-white hover:bg-[#194d62] h-8"
-                    >
+                    <button type="button" onClick={() => setShowCameraModal(true)} style={{ fontSize: 13, lineHeight: 1, borderRadius: "0.375rem" }} className="rounded-md bg-[#6998ab] px-3 font-medium text-white hover:bg-[#194d62] h-8">
                       Use Camera
                     </button>
 
                     {(photoPreview || formData.photoURL) && (
-                      <button
-                        type="button"
-                        onClick={removePhoto}
-                        className="text-xs text-red-600 hover:underline"
-                      >
+                      <button type="button" onClick={removePhoto} className="text-xs text-red-600 hover:underline">
                         Remove
                       </button>
                     )}
@@ -367,69 +317,30 @@ function IPFormModal({
 
                   {/* File name / state */}
                   <p className="text-xs text-slate-500 truncate max-w-[320px]">
-                    {photoFile?.name
-                      ? photoFile.name
-                      : formData.photoURL
-                      ? "Existing photo"
-                      : "No file selected"}
+                    {photoFile?.name ? photoFile.name : formData.photoURL ? "Existing photo" : "No file selected"}
                   </p>
 
-                  {uploadError && (
-                    <p className="text-xs text-red-600">{uploadError}</p>
-                  )}
+                  {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
                 </div>
               </div>
             </div>
           </div>
 
-
           {/* Birth and Age */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Date of Birth:
-            </label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleInputChange}
-              required
-              className="col-span-4 input-style"
-            />
-            <label className="col-span-1 font-semibold text-gray-700 text-right">
-              Age:
-            </label>
-            <input
-              type="number"
-              name="age"
-              placeholder="Age"
-              value={formData.age}
-              readOnly
-              required
-              className="col-span-4 input-style bg-gray-100"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Date of Birth:</label>
+            <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} required className="col-span-4 input-style" />
+            <label className="col-span-1 font-semibold text-gray-700 text-right">Age:</label>
+            <input type="number" name="age" placeholder="Age" value={formData.age} readOnly required className="col-span-4 input-style bg-gray-100" />
           </div>
 
           {/* Gender */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Gender:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Gender:</label>
             <div className="col-span-9 flex gap-4">
               {["Male", "Female"].map((val) => (
-                <label
-                  key={val}
-                  className={`radio-style ${
-                    formData.gender === val ? "active-radio" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="gender"
-                    className="mr-2"
-                    checked={formData.gender === val}
-                    onChange={() => handleRadioChange("gender", val)}
-                  />
+                <label key={val} className={`radio-style ${formData.gender === val ? "active-radio" : ""}`}>
+                  <input type="radio" name="gender" className="mr-2" checked={formData.gender === val} onChange={() => handleRadioChange("gender", val)} />
                   <span className="ml-1">{val}</span>
                 </label>
               ))}
@@ -438,24 +349,11 @@ function IPFormModal({
 
           {/* Civil Status */}
           <div className="grid grid-cols-12 gap-4 items-start">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Civil Status:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Civil Status:</label>
             <div className="col-span-9 grid grid-cols-2 md:grid-cols-4 gap-2">
               {["Single", "Married", "Widowed", "Separated"].map((val) => (
-                <label
-                  key={val}
-                  className={`radio-style ${
-                    formData.civilStatus === val ? "active-radio" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="civilStatus"
-                    className="mr-2"
-                    checked={formData.civilStatus === val}
-                    onChange={() => handleRadioChange("civilStatus", val)}
-                  />
+                <label key={val} className={`radio-style ${formData.civilStatus === val ? "active-radio" : ""}`}>
+                  <input type="radio" name="civilStatus" className="mr-2" checked={formData.civilStatus === val} onChange={() => handleRadioChange("civilStatus", val)} />
                   <span className="ml-1">{val}</span>
                 </label>
               ))}
@@ -464,32 +362,11 @@ function IPFormModal({
 
           {/* Education */}
           <div className="grid grid-cols-12 gap-4 items-start">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Education Level:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Education Level:</label>
             <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {[
-                "No Formal Education",
-                "Elementary",
-                "High School",
-                "College",
-                "Vocational",
-              ].map((val) => (
-                <label
-                  key={val}
-                  className={`radio-style ${
-                    formData.educationLevel === val ? "active-radio" : ""
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="educationLevel"
-                    className="mr-2"
-                    checked={formData.educationLevel === val}
-                    onChange={() =>
-                      handleRadioChange("educationLevel", val)
-                    }
-                  />
+              {["No Formal Education", "Elementary", "High School", "College", "Vocational"].map((val) => (
+                <label key={val} className={`radio-style ${formData.educationLevel === val ? "active-radio" : ""}`}>
+                  <input type="radio" name="educationLevel" className="mr-2" checked={formData.educationLevel === val} onChange={() => handleRadioChange("educationLevel", val)} />
                   <span className="ml-1">{val}</span>
                 </label>
               ))}
@@ -498,87 +375,42 @@ function IPFormModal({
 
           {/* Occupation */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Occupation:
-            </label>
-            <input
-              type="text"
-              name="occupation"
-              value={formData.occupation}
-              onChange={handleInputChange}
-              className="col-span-9 input-style"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Occupation:</label>
+            <input type="text" name="occupation" value={formData.occupation} onChange={handleInputChange} className="col-span-9 input-style" />
           </div>
 
           {/* Lineage */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Lineage:
-            </label>
-            <input
-              type="text"
-              name="lineage"
-              value={formData.lineage}
-              onChange={handleInputChange}
-              className="col-span-9 input-style"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Lineage:</label>
+            <input type="text" name="lineage" value={formData.lineage} onChange={handleInputChange} className="col-span-9 input-style" />
           </div>
 
           {/* Barangay */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Barangay:
-            </label>
-            <select
-              name="barangay"
-              value={formData.barangay}
-              onChange={handleInputChange}
-              required
-              className="col-span-9 input-style"
-            >
+            <label className="col-span-3 font-semibold text-gray-700">Barangay:</label>
+            <select name="barangay" value={formData.barangay} onChange={handleInputChange} required className="col-span-9 input-style">
               <option value="">Select Barangay</option>
               {allBarangays.map((brgy) => (
-                <option key={brgy.id} value={brgy.name}>
-                  {brgy.name}
-                </option>
+                <option key={brgy.id} value={brgy.name}>{brgy.name}</option>
               ))}
             </select>
           </div>
 
           {/* Address */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Address:
-            </label>
-            <input
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              className="col-span-9 input-style"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Address:</label>
+            <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="col-span-9 input-style" />
           </div>
 
           {/* Health Condition */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Health Condition:
-            </label>
-            <input
-              type="text"
-              name="healthCondition"
-              value={formData.healthCondition}
-              onChange={handleInputChange}
-              list="health-options"
-              className="col-span-9 input-style w-full"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Health Condition:</label>
+            <input type="text" name="healthCondition" value={formData.healthCondition} onChange={handleInputChange} className="col-span-9 input-style w-full" />
           </div>
 
-          {/* Household Members */}
+          {/* Household Members (required only on Add to avoid blocking legacy edits) */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Household Members:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Household Members:</label>
             <input
               type="number"
               name="householdMembers"
@@ -587,15 +419,13 @@ function IPFormModal({
               min={0}
               step={1}
               className="col-span-9 input-style"
-              required
+              required={!isEditing}
             />
           </div>
 
           {/* Contact Number */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Contact Number:
-            </label>
+            <label className="col-span-3 font-semibold text-gray-700">Contact Number:</label>
             <input
               type="tel"
               name="contactNumber"
@@ -613,100 +443,38 @@ function IPFormModal({
 
           {/* Municipality + Province */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">
-              Municipality:
-            </label>
-            <input
-              type="text"
-              name="municipality"
-              value={formData.municipality}
-              readOnly
-              className="col-span-4 input-style"
-            />
-            <label className="col-span-1 font-semibold text-gray-700 text-right">
-              Province:
-            </label>
-            <input
-              type="text"
-              name="province"
-              value={formData.province}
-              readOnly
-              className="col-span-4 input-style"
-            />
+            <label className="col-span-3 font-semibold text-gray-700">Municipality:</label>
+            <input type="text" name="municipality" value={formData.municipality} readOnly className="col-span-4 input-style" />
+            <label className="col-span-1 font-semibold text-gray-700 text-right">Province:</label>
+            <input type="text" name="province" value={formData.province} readOnly className="col-span-4 input-style" />
           </div>
 
           {/* Family Tree */}
-            <div className="grid grid-cols-12 gap-4 items-start">
-              <label className="col-span-3 font-semibold text-gray-700">
-                Family Tree:
-              </label>
-              <div className="col-span-9 grid grid-cols-2 md:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  placeholder="grandfather"
-                  value={formData.familyTree.grandfather}
-                  onChange={(e) => handleFamilyChange("grandfather", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="grandmother"
-                  value={formData.familyTree.grandmother}
-                  onChange={(e) => handleFamilyChange("grandmother", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="father"
-                  value={formData.familyTree.father}
-                  onChange={(e) => handleFamilyChange("father", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="mother"
-                  value={formData.familyTree.mother}
-                  onChange={(e) => handleFamilyChange("mother", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="siblings (comma-separated)"
-                  value={formData.familyTree.siblings}
-                  onChange={(e) => handleFamilyChange("siblings", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="spouse"
-                  value={formData.familyTree.spouse}
-                  onChange={(e) => handleFamilyChange("spouse", e.target.value)}
-                  className="input-style"
-                />
-                <input
-                  type="text"
-                  placeholder="children (comma-separated)"
-                  value={formData.familyTree.children}
-                  onChange={(e) => handleFamilyChange("children", e.target.value)}
-                  className="input-style"
-                />
-              </div>
+          <div className="grid grid-cols-12 gap-4 items-start">
+            <label className="col-span-3 font-semibold text-gray-700">Family Tree:</label>
+            <div className="col-span-9 grid grid-cols-2 md:grid-cols-3 gap-2">
+              <input type="text" placeholder="grandfather" value={formData.familyTree.grandfather} onChange={(e) => handleFamilyChange("grandfather", e.target.value)} className="input-style" />
+              <input type="text" placeholder="grandmother" value={formData.familyTree.grandmother} onChange={(e) => handleFamilyChange("grandmother", e.target.value)} className="input-style" />
+              <input type="text" placeholder="father" value={formData.familyTree.father} onChange={(e) => handleFamilyChange("father", e.target.value)} className="input-style" />
+              <input type="text" placeholder="mother" value={formData.familyTree.mother} onChange={(e) => handleFamilyChange("mother", e.target.value)} className="input-style" />
+              <input type="text" placeholder="siblings (comma-separated)" value={formData.familyTree.siblings} onChange={(e) => handleFamilyChange("siblings", e.target.value)} className="input-style" />
+              <input type="text" placeholder="spouse" value={formData.familyTree.spouse} onChange={(e) => handleFamilyChange("spouse", e.target.value)} className="input-style" />
+              <input type="text" placeholder="children (comma-separated)" value={formData.familyTree.children} onChange={(e) => handleFamilyChange("children", e.target.value)} className="input-style" />
             </div>
+          </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 mt-6">
-            <button
-              type="button"
-              onClick={() => onClose()}
-              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-            >
+            <button type="button" onClick={() => onClose()} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#1a3b5d] text-white rounded hover:bg-[#16304a]"
+              disabled={isSaving}
+              className={`px-4 py-2 rounded text-white ${isSaving ? "bg-[#1a3b5d]/60 cursor-not-allowed" : "bg-[#1a3b5d] hover:bg-[#16304a]"}`}
+              aria-busy={isSaving}
             >
-              {isEditing ? "Update" : "Add"}
+              {isSaving ? (isEditing ? "Updating…" : "Adding…") : (isEditing ? "Update" : "Add")}
             </button>
           </div>
         </form>
@@ -718,7 +486,6 @@ function IPFormModal({
         onClose={() => setShowCameraModal(false)}
         initialFacingMode="environment"
         onCapture={(file) => {
-          // Preview + keep File to upload to Firebase Storage on submit
           if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
           const url = URL.createObjectURL(file);
           objectUrlRef.current = url;

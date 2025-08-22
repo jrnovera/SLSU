@@ -51,7 +51,8 @@ function RecentActivities() {
   // helper: compute age if only dateOfBirth is present
   const computeAge = (dob) => {
     if (!dob) return null;
-    const dateVal = typeof dob === "string" ? new Date(dob) : dob?.toDate ? dob.toDate() : new Date(dob);
+    const dateVal =
+      typeof dob === "string" ? new Date(dob) : dob?.toDate ? dob.toDate() : new Date(dob);
     if (isNaN(dateVal.getTime())) return null;
     const today = new Date();
     let age = today.getFullYear() - dateVal.getFullYear();
@@ -95,26 +96,38 @@ function RecentActivities() {
   const barangay = latest?.barangay || "";
   const level = latest?.educationLevel || "";
 
+  // ✅ Prefer uploaded image (photoURL from IPFormModal). Fallback to legacy "image" or default icon.
+  const avatarSrc = latest?.photoURL || latest?.image || profileImg;
+
   return (
-    <div className="bg-white rounded-[30px] p-2 space-y-5">
+    <div className="bg-[#f0eee2] rounded-[30px] p-2 space-y-5">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-bold text-black">Latest Data Entry</h3>
-        <p className="text-sm text-gray-500 -mt-1">recent demographic record</p>
+        <h3 className="text-lg font-bold text-[#062937]">Latest Data Entry</h3>
+        <p className="text-sm text-[#062937] -mt-1">recent demographic record</p>
       </div>
 
       {/* Content Row */}
       <div className="flex items-start gap-4">
-        <img src={profileImg} alt="Profile" className="w-[60px] h-[60px] object-cover rounded-full" />
+        <img
+          src={avatarSrc}
+          alt="Profile"
+          className="w-[60px] h-[60px] object-cover rounded-full ring-1 ring-[#d9d7cb]"
+          onError={(e) => {
+            // fallback if the stored URL is broken
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = profileImg;
+          }}
+        />
         <div className="space-y-1">
           {loading ? (
             <p className="font-semibold text-black">Loading…</p>
           ) : latest ? (
             <>
-              <p className="font-semibold text-black">
+              <p className="font-semibold text-[#062937]">
                 {fullName || "Unknown"} <span className="text-gray-600">added</span>
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#062937]">
                 {displayAge ? `Age ${displayAge}, ` : ""}
                 {gender ? `${gender}, ` : ""}
                 {barangay ? `Brgy. ${barangay}, ` : ""}
@@ -126,7 +139,7 @@ function RecentActivities() {
               <p className="font-semibold text-black">
                 No recent entries <span className="text-gray-600">yet</span>
               </p>
-              <p className="text-sm text-gray-600">Add a new Indigenous Person to see it here.</p>
+              <p className="text-sm text-[#062937]">Add a new Indigenous Person to see it here.</p>
             </>
           )}
         </div>
@@ -139,7 +152,7 @@ function RecentActivities() {
           disabled={!latest}
           onClick={() => latest && setViewOpen(true)}
           className={`text-sm font-semibold underline-offset-4 ${
-            latest ? "text-black hover:underline" : "text-gray-400 cursor-not-allowed"
+            latest ? "text-[#062937] hover:underline" : "text-gray-400 cursor-not-allowed"
           }`}
         >
           View Entry

@@ -4,8 +4,8 @@ import noHealthIcon from "../assets/icons/nohealthcondition.png";
 import returnIcon from "../assets/icons/return.png"; // back icon
 
 /** Figma tokens */
-const BLUE = "#448AC7";      // primary blue
-const TILE_GRAY = "#E6E6E6"; // muted right tile bg
+const BLUE = "#7cafca";      // primary blue
+const TILE_GRAY = "#c6c6c6"; // muted right tile bg
 const TEXT_BLUE = "#3D6D98";
 
 export default function HealthCategoryModal({
@@ -104,10 +104,10 @@ export default function HealthCategoryModal({
               }}
             >
               <img src={healthIcon} alt="" className="h-12 w-12 object-contain" />
-              <div className="mt-3 text-sm font-semibold text-white">
+              <div className="mt-3 text-sm font-semibold text-black">
                 With Health Condition
               </div>
-              <div className="mt-2 text-2xl font-bold text-white">
+              <div className="mt-2 text-2xl font-bold text-black">
                 {counts.withHealth}
               </div>
             </div>
@@ -125,10 +125,10 @@ export default function HealthCategoryModal({
               }}
             >
               <img src={noHealthIcon} alt="" className="h-12 w-12 object-contain opacity-80" />
-              <div className="mt-3 text-sm font-semibold" style={{ color: TEXT_BLUE }}>
+              <div className="mt-3 text-sm font-semibold text-black">
                 No Health Condition
               </div>
-              <div className="mt-2 text-2xl font-bold" style={{ color: TEXT_BLUE }}>
+              <div className="mt-2 text-2xl font-bold text-black">
                 {counts.noHealth}
               </div>
             </div>

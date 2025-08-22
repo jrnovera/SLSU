@@ -3,15 +3,14 @@ import Modal from 'react-modal';
 import { FaUser } from 'react-icons/fa';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import profileImg from '../assets/icons/user.png'; // ✅ default avatar
 
 function formatDOB(dateOfBirth) {
   if (!dateOfBirth) return 'N/A';
-  // Firestore Timestamp support
   if (typeof dateOfBirth === 'object' && dateOfBirth?.seconds) {
     const d = new Date(dateOfBirth.seconds * 1000);
     return d.toISOString().slice(0, 10);
   }
-  // ISO/string fallback
   try {
     const d = new Date(dateOfBirth);
     if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
@@ -23,10 +22,7 @@ const toArray = (val) => {
   if (!val) return [];
   if (Array.isArray(val)) return val.filter(Boolean);
   if (typeof val === 'string')
-    return val
-      .split(',')
-      .map((x) => x.trim())
-      .filter(Boolean);
+    return val.split(',').map((x) => x.trim()).filter(Boolean);
   return [];
 };
 
@@ -45,9 +41,12 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
     householdMembers,
     civilStatus,
     familyTree = {},
+    photoURL,
+    image, // legacy field fallback
   } = person;
 
   const fullName = `${firstName || ''} ${lastName || ''}`.trim() || 'N/A';
+  const avatarSrc = photoURL || image || profileImg; // ✅ choose best available
 
   // Accept nested familyTree OR flat fields if you ever move them to root
   const father = familyTree.father || person.father || 'N/A';
@@ -75,13 +74,28 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
         {/* Column 1: Profile Info */}
         <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex flex-col items-center text-center space-y-2 mb-4">
-            <FaUser className="text-gray-600" size={80} />
+          <div className="flex flex-col items-center text-center space-y-3 mb-4">
+            {/* ✅ Avatar with graceful fallback to user.png */}
+            <div className="h-24 w-24 rounded-full overflow-hidden ring-2 ring-gray-200 bg-gray-100 flex items-center justify-center">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={fullName || 'Profile photo'}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = profileImg;
+                  }}
+                />
+              ) : (
+                <FaUser className="text-gray-500" size={48} />
+              )}
+            </div>
             <h2 className="text-xl font-semibold">{fullName}</h2>
           </div>
+
           <div className="space-y-1 text-sm text-gray-700">
             <p><span className="font-semibold">Date of Birth:</span> {formatDOB(dateOfBirth)}</p>
             <p><span className="font-semibold">Gender:</span> {gender || 'N/A'}</p>
@@ -138,12 +152,9 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Family Tree</h2>
 
           <div className="flex flex-col items-center space-y-16">
-
             {/* Parents */}
             <div className="relative flex flex-col items-center w-full">
-              {/* Horizontal line between parents */}
               <div className="absolute top-10 left-1/2 -translate-x-1/2 w-32 h-1 bg-yellow-400 z-0" />
-              {/* Vertical line from parents to middle */}
               <div className="absolute top-10 left-1/2 -translate-x-1/2 w-1 h-12 bg-yellow-400 z-0" />
 
               <div className="flex justify-center gap-24 relative z-10">
@@ -162,10 +173,8 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
 
             {/* Middle Level: Siblings + You + Spouse */}
             <div className="relative w-full flex flex-col items-center">
-              {/* Horizontal connector across all members */}
               <div className="relative w-full max-w-4xl h-16 flex items-center justify-center">
                 <div className="absolute top-8 left-0 right-0 h-1 bg-yellow-400 z-0" />
-                {/* Vertical connector down from center (YOU) */}
                 <div className="absolute top-8 left-1/2 -translate-x-1/2 h-12 w-1 bg-yellow-400 z-0" />
 
                 <div className="flex justify-center gap-12 z-10 relative flex-wrap">
@@ -194,9 +203,7 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
               {/* Children Section */}
               {parsedChildren.length > 0 && (
                 <div className="relative w-full mt-16 flex flex-col items-center">
-                  {/* Vertical line from you to children */}
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-12 bg-yellow-400 z-0" />
-                  {/* Horizontal line connecting children if more than 1 */}
                   {parsedChildren.length > 1 && (
                     <div className="absolute top-12 left-1/2 -translate-x-1/2 w-64 h-1 bg-yellow-400 z-0" />
                   )}

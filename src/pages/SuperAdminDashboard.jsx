@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import { allBarangays } from '../components/Brgylist';
 import IPFormModal from '../components/IPFormModal';
-import ProfileViewModal from '../components/ProfileViewModal'; // ⬅️ use this modal
+import ProfileViewModal from '../components/ProfileViewModal';
 import {
   collection,
   addDoc,
@@ -41,10 +41,14 @@ function SuperAdminDashboard() {
   const [showUpdateForm, setShowUpdateForm] = useState(false);
   const [selectedIp, setSelectedIp] = useState(null);
 
-  // 🔵 ProfileViewModal state
+  // Profile modal
   const [showProfileView, setShowProfileView] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+
+  // 🔴 Delete confirmation modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [ipToDelete, setIpToDelete] = useState(null);
 
   /* suggestions */
   const [suggestions, setSuggestions] = useState([]);
@@ -106,7 +110,6 @@ function SuperAdminDashboard() {
   const handleCloseForm = () => {
     setShowAddForm(false);
     setShowUpdateForm(false);
-    // close profile modal too
     setShowProfileView(false);
     setProfileData(null);
   };
@@ -129,21 +132,35 @@ function SuperAdminDashboard() {
     }
   };
 
-  const handleDelete = async (ip) => {
-    if (!window.confirm(`Are you sure you want to delete ${ip.name}?`)) return;
+  // 🔴 Open confirmation modal instead of window.confirm
+  const requestDelete = (ip) => {
+    setIpToDelete(ip);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!ipToDelete) return;
     try {
-      await deleteDoc(doc(db, 'indigenousPeople', ip.id));
-      setIpList((prev) => prev.filter((item) => item.id !== ip.id));
-      if (showProfileView && profileData?.id === ip.id) {
+      await deleteDoc(doc(db, 'indigenousPeople', ipToDelete.id));
+      setIpList((prev) => prev.filter((item) => item.id !== ipToDelete.id));
+      if (showProfileView && profileData?.id === ipToDelete.id) {
         setShowProfileView(false);
         setProfileData(null);
       }
     } catch (error) {
       console.error('Error deleting IP:', error);
+    } finally {
+      setShowDeleteModal(false);
+      setIpToDelete(null);
     }
   };
 
-  // 🔵 Open ProfileViewModal (pull fresh doc then show)
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setIpToDelete(null);
+  };
+
+  // View profile
   const handleViewProfile = async (ip) => {
     try {
       setLoadingProfile(true);
@@ -152,7 +169,6 @@ function SuperAdminDashboard() {
 
       if (ipSnap.exists()) {
         const data = ipSnap.data();
-        // pass the raw record expected by ProfileViewModal
         setProfileData({ id: ip.id, ...data });
         setShowProfileView(true);
       }
@@ -385,7 +401,7 @@ function SuperAdminDashboard() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDelete(ip)}
+                        onClick={() => requestDelete(ip)} // 🔴 open modal
                         className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded hover:bg-[#194d62]"
                       >
                         Delete
@@ -414,12 +430,42 @@ function SuperAdminDashboard() {
         isEditing={true}
       />
 
-      {/* 🔵 ProfileViewModal instead of ViewOnlyProfileModal */}
       <ProfileViewModal
         isOpen={showProfileView && !!profileData}
         onClose={handleCloseForm}
         person={profileData}
       />
+
+      {/* 🔴 Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 sm:p-8 text-center">
+            <h3 className="text-xl sm:text-2xl font-bold text-[#123645] pb-4 leading-snug">
+              Are you sure you want to delete{' '}
+              <span className="whitespace-nowrap">
+                {ipToDelete?.name ||
+                  `${ipToDelete?.lastName || ''}, ${ipToDelete?.firstName || ''} ${ipToDelete?.middleName || ''}`}
+              </span>
+              ?
+            </h3>
+
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={cancelDelete}
+                className="bg-gray-300 text-[#123645] font-semibold px-6 py-2.5 rounded-full hover:bg-gray-400 transition duration-200 w-24"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="bg-[#2c526b] text-white font-semibold px-6 py-2.5 rounded-full hover:bg-[#1e3b50] transition duration-200 w-24"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
