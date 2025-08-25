@@ -1,4 +1,243 @@
-/* === visual styling (icons / labels) === */
+/* === Enhanced Family Tree Styles === */
+.enhanced-family-tree {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+  min-height: 400px;
+}
+
+.tree-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  min-width: 600px;
+}
+
+/* === Generation Levels === */
+.generation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.parents-generation {
+  margin-bottom: 8px;
+}
+
+.middle-generation {
+  margin: 8px 0;
+}
+
+.children-generation {
+  margin-top: 8px;
+}
+
+/* === Family Member Cards === */
+.family-member {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  border: 2px solid transparent;
+}
+
+.family-member:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* === Special Node Styles === */
+.parents-node {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  min-width: 180px;
+  padding: 20px;
+}
+
+.you-node.highlighted {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  border: 3px solid #ff9ff3;
+  transform: scale(1.05);
+}
+
+.spouse-node {
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  color: white;
+}
+
+.sibling-node {
+  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
+  color: white;
+}
+
+.child-node {
+  background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%);
+  color: white;
+}
+
+/* === Member Info === */
+.member-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.member-name {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.parents-names {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.you-name {
+  font-size: 15px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.member-role {
+  font-size: 11px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* === Family Icons === */
+.family-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.parent-icon {
+  font-size: 28px;
+}
+
+.you-icon {
+  font-size: 26px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* === Connection Lines === */
+.connection-line {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+  position: relative;
+}
+
+.connection-line.vertical {
+  width: 4px;
+  height: 32px;
+  margin: 0 auto;
+}
+
+.connection-line::before,
+.connection-line::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #667eea;
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.connection-line.vertical::before {
+  top: -4px;
+}
+
+.connection-line.vertical::after {
+  bottom: -4px;
+}
+
+/* === Row Layouts === */
+.siblings-row {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.children-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* === Responsive Design === */
+@media (max-width: 768px) {
+  .enhanced-family-tree {
+    padding: 20px;
+  }
+  
+  .tree-container {
+    min-width: 400px;
+  }
+  
+  .family-member {
+    min-width: 100px;
+    padding: 12px;
+  }
+  
+  .siblings-row,
+  .children-row {
+    gap: 12px;
+  }
+  
+  .member-name {
+    font-size: 13px;
+  }
+  
+  .parents-names {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tree-container {
+    min-width: 300px;
+  }
+  
+  .family-member {
+    min-width: 80px;
+    padding: 10px;
+  }
+  
+  .siblings-row,
+  .children-row {
+    gap: 8px;
+  }
+}
+
+/* === Legacy Styles (for backward compatibility) === */
 .tree a.person{
   border:0; background:transparent; padding:0; text-decoration:none;
   color:#111; display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -9,7 +248,6 @@
 .tree .youIcon{ color:#ef4444; }
 .tree .youText{ color:#ef4444; font-weight:600; }
 
-/* === couple blocks (parents and you+spouse) === */
 .tree li.couple > .partners{
   display:inline-flex; align-items:center; justify-content:center; gap:18px; position:relative;
 }
@@ -18,11 +256,9 @@
 }
 .tree li.couple.you-couple > .partners .marriage.small{ width:40px; }
 
-/* === match your yellow connectors for the classic lines === */
 .tree li::before, .tree li::after{ border-color:#fbbf24; }
 .tree ul ul::before{ border-color:#fbbf24; height:26px; }
 
-/* === children under spouse: custom connectors === */
 .family-classic .children-wrap{ position:relative; margin-top:10px; }
 .family-classic .children-row{
   position:relative; display:flex; justify-content:center; gap:20px;
@@ -30,9 +266,8 @@
 }
 .family-classic .child{ position:relative; display:flex; flex-direction:column; align-items:center; }
 .family-classic .line{ position:absolute; background:#fbbf24; display:block; }
-.family-classic .spine{ width:3px; }                    /* spouse ↓ children bar */
-.family-classic .child-bar{ height:3px; }               /* first ↔ last child */
+.family-classic .spine{ width:3px; }
+.family-classic .child-bar{ height:3px; }
 .family-classic .stub{ width:3px; height:8px; top:-8px; left:50%; transform:translateX(-50%); }
 
-/* clearfix (classic layout uses floats) */
 .tree:after, .tree ul:after{ content:""; display:block; clear:both; }

@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { allBarangays } from "./Brgylist";
 import { serverTimestamp } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase/config";
+import { useAuth } from "../contexts/AuthContext";
 import CameraCaptureModal from "./CameraCaptureModal"; // ⬅️ camera modal
 
 const FAMILY_DEFAULT = {
-  grandfather: "",
-  grandmother: "",
   father: "",
   mother: "",
   siblings: "",
@@ -22,6 +22,7 @@ function IPFormModal({
   isEditing = false,
   selectedBarangay = null,
 }) {
+  const { currentUser } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -57,6 +58,36 @@ function IPFormModal({
 
   // blob url cleanup
   const objectUrlRef = useRef(null);
+
+  // reset helper for new entry
+  const resetForm = () => {
+    setFormData({
+      firstName: "",
+      lastName: "",
+      middleName: "",
+      dateOfBirth: "",
+      age: "",
+      gender: "",
+      civilStatus: "",
+      educationLevel: "",
+      occupation: "",
+      lineage: "",
+      barangay: selectedBarangay ? selectedBarangay.name : "",
+      address: "",
+      municipality: "Catanauan",
+      province: "Quezon",
+      healthCondition: "",
+      householdMembers: "",
+      contactNumber: "",
+      familyTree: { ...FAMILY_DEFAULT },
+      photoURL: "",
+    });
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
+    objectUrlRef.current = null;
+    setPhotoFile(null);
+    setPhotoPreview("");
+    setUploadError("");
+  };
 
   /* helpers */
   const calculateAge = (dob) => {
@@ -119,6 +150,13 @@ function IPFormModal({
     document.body.style.overflow = isOpen ? "hidden" : "auto";
     return () => { document.body.style.overflow = "auto"; };
   }, [isOpen]);
+
+  // When opening for a new add, ensure a fresh empty form
+  useEffect(() => {
+    if (isOpen && !isEditing) {
+      resetForm();
+    }
+  }, [isOpen, isEditing, selectedBarangay]);
 
   /* cleanup blob url on unmount */
   useEffect(() => {
@@ -200,6 +238,14 @@ function IPFormModal({
     setIsSaving(true);
 
     try {
+      // Ensure we have an authenticated user (rules may require request.auth)
+      if (!currentUser) {
+        setUploadError("Authentication not ready. Please wait a moment and try again.");
+        return;
+      }
+      // Prefer DOB-derived age when DOB is provided; otherwise use manual age input
+      const computedAgeOnSubmit = formData.dateOfBirth ? calculateAge(formData.dateOfBirth) : "";
+
       const normalizedFamily = {
         ...formData.familyTree,
         siblings: toArrayFromCommaString(formData.familyTree.siblings),
@@ -207,7 +253,9 @@ function IPFormModal({
       };
 
       const normalizedAge =
-        formData.age === "" || formData.age === null ? null : Number(formData.age);
+        computedAgeOnSubmit !== ""
+          ? Number(computedAgeOnSubmit)
+          : (formData.age === "" || formData.age === null ? null : Number(formData.age));
 
       const normalizedHousehold =
         formData.householdMembers === "" || formData.householdMembers === null
@@ -218,18 +266,34 @@ function IPFormModal({
       let photoURL = formData.photoURL || "";
       if (photoFile) {
         try {
-          const storage = getStorage();
           const ext = (photoFile.name.split(".").pop() || "jpg").toLowerCase();
           const safeFirst = (formData.firstName || "ip").replace(/\s+/g, "_").toLowerCase();
           const safeLast = (formData.lastName || "record").replace(/\s+/g, "_").toLowerCase();
           const path = `ip_photos/${Date.now()}_${safeLast}_${safeFirst}.${ext}`;
           const storageRef = ref(storage, path);
-          await uploadBytes(storageRef, photoFile);
-          photoURL = await getDownloadURL(storageRef);
+          const metadata = { contentType: photoFile.type || "image/jpeg" };
+          const task = uploadBytesResumable(storageRef, photoFile, metadata);
+          await new Promise((resolve, reject) => {
+            task.on(
+              'state_changed',
+              () => {},
+              (error) => reject(error),
+              async () => {
+                try {
+                  const url = await getDownloadURL(task.snapshot.ref);
+                  photoURL = url;
+                  resolve();
+                } catch (e) {
+                  reject(e);
+                }
+              }
+            );
+          });
         } catch (err) {
           console.error("Photo upload failed:", err);
-          // Don’t block the update — keep existing photoURL if any
-          setUploadError("Upload failed. You can submit again or save without a new photo.");
+          // Continue submit, keep existing photoURL if any
+          const errMsg = err?.code || err?.message || String(err);
+          setUploadError(`Photo upload failed: ${errMsg}. You can save without a new photo.`);
         }
       }
 
@@ -245,7 +309,18 @@ function IPFormModal({
         ...(isEditing ? {} : { createdAt: serverTimestamp() }),
       };
 
-      await onSubmit(payload); // parent handles add/update + closing modal
+      try {
+        await onSubmit(payload); // parent handles add/update + closing modal
+      } catch (err) {
+        console.error("Save failed:", err);
+        setUploadError(err?.code || err?.message || "Failed to save. Please try again.");
+        return;
+      }
+
+      // If this was an Add flow and the modal stays open, clear the form for the next entry
+      if (!isEditing) {
+        resetForm();
+      }
     } finally {
       setIsSaving(false);
     }
@@ -331,7 +406,7 @@ function IPFormModal({
             <label className="col-span-3 font-semibold text-gray-700">Date of Birth:</label>
             <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} required className="col-span-4 input-style" />
             <label className="col-span-1 font-semibold text-gray-700 text-right">Age:</label>
-            <input type="number" name="age" placeholder="Age" value={formData.age} readOnly required className="col-span-4 input-style bg-gray-100" />
+            <input type="number" name="age" placeholder="Age" value={formData.age} onChange={handleInputChange} required className="col-span-4 input-style" />
           </div>
 
           {/* Gender */}
@@ -453,8 +528,6 @@ function IPFormModal({
           <div className="grid grid-cols-12 gap-4 items-start">
             <label className="col-span-3 font-semibold text-gray-700">Family Tree:</label>
             <div className="col-span-9 grid grid-cols-2 md:grid-cols-3 gap-2">
-              <input type="text" placeholder="grandfather" value={formData.familyTree.grandfather} onChange={(e) => handleFamilyChange("grandfather", e.target.value)} className="input-style" />
-              <input type="text" placeholder="grandmother" value={formData.familyTree.grandmother} onChange={(e) => handleFamilyChange("grandmother", e.target.value)} className="input-style" />
               <input type="text" placeholder="father" value={formData.familyTree.father} onChange={(e) => handleFamilyChange("father", e.target.value)} className="input-style" />
               <input type="text" placeholder="mother" value={formData.familyTree.mother} onChange={(e) => handleFamilyChange("mother", e.target.value)} className="input-style" />
               <input type="text" placeholder="siblings (comma-separated)" value={formData.familyTree.siblings} onChange={(e) => handleFamilyChange("siblings", e.target.value)} className="input-style" />

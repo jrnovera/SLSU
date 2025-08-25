@@ -2,6 +2,18 @@
 import React from "react";
 import "./FamilyTree.css";
 
+// Icons for family members
+const FamilyIcon = ({ type, className = "" }) => {
+  const icons = {
+    parent: "👨‍👩‍👧‍👦",
+    person: "👤",
+    you: "🔴",
+    spouse: "💑",
+    child: "👶"
+  };
+  return <span className={`family-icon ${className}`}>{icons[type] || icons.person}</span>;
+};
+
 /**
  * Props:
  * father?: string
@@ -32,49 +44,81 @@ export default function FamilyTreeClassic({
   const hasSpouse = Boolean(spouse && String(spouse).trim());
 
   return (
-    <div className="tree" style={{ overflowX: "auto", paddingBottom: 8 }}>
-      <ul>
-        {/* Top: Parents as single combined node (fits the CSS pattern) */}
-        <li>
-          <a href="#0">{`${father} & ${mother}`}</a>
+    <div className="enhanced-family-tree">
+      <div className="tree-container">
+        {/* Parents Level */}
+        <div className="generation parents-generation">
+          <div className="family-member parents-node">
+            <FamilyIcon type="parent" className="parent-icon" />
+            <div className="member-info">
+              <div className="member-name parents-names">{`${father} & ${mother}`}</div>
+              <div className="member-role">Parents</div>
+            </div>
+          </div>
+        </div>
 
-          {/* Row: Siblings + You + (Spouse) */}
-          {(hasSiblings || you || hasSpouse) && (
-            <ul>
+        {/* Connection Line */}
+        <div className="connection-line vertical"></div>
+
+        {/* Siblings + You + Spouse Level */}
+        {(hasSiblings || you || hasSpouse) && (
+          <div className="generation middle-generation">
+            <div className="siblings-row">
               {/* Siblings */}
               {hasSiblings &&
                 siblings.map((s, i) => (
-                  <li key={`sib-${i}`}>
-                    <a href="#0">{s}</a>
-                  </li>
+                  <div key={`sib-${i}`} className="family-member sibling-node">
+                    <FamilyIcon type="person" className="sibling-icon" />
+                    <div className="member-info">
+                      <div className="member-name">{s}</div>
+                      <div className="member-role">Sibling</div>
+                    </div>
+                  </div>
                 ))}
 
-              {/* YOU (children hang from here if any) */}
-              <li>
-                <a href="#0">{you || "You"}</a>
+              {/* YOU */}
+              <div className="family-member you-node highlighted">
+                <FamilyIcon type="you" className="you-icon" />
+                <div className="member-info">
+                  <div className="member-name you-name">{you || "You"}</div>
+                  <div className="member-role">You</div>
+                </div>
+              </div>
 
-                {/* Children */}
-                {hasChildren && (
-                  <ul>
-                    {children.map((c, i) => (
-                      <li key={`child-${i}`}>
-                        <a href="#0">{c}</a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-
-              {/* SPOUSE (only if provided). No children hang from spouse here. */}
+              {/* SPOUSE */}
               {hasSpouse && (
-                <li>
-                  <a href="#0">{spouse}</a>
-                </li>
+                <div className="family-member spouse-node">
+                  <FamilyIcon type="spouse" className="spouse-icon" />
+                  <div className="member-info">
+                    <div className="member-name">{spouse}</div>
+                    <div className="member-role">Spouse</div>
+                  </div>
+                </div>
               )}
-            </ul>
-          )}
-        </li>
-      </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Children Level */}
+        {hasChildren && (
+          <>
+            <div className="connection-line vertical"></div>
+            <div className="generation children-generation">
+              <div className="children-row">
+                {children.map((c, i) => (
+                  <div key={`child-${i}`} className="family-member child-node">
+                    <FamilyIcon type="child" className="child-icon" />
+                    <div className="member-info">
+                      <div className="member-name">{c}</div>
+                      <div className="member-role">Child</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

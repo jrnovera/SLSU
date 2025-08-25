@@ -24,10 +24,10 @@ function Login() {
     try {
       const userCredential = await login(email, password);
       
-      // Check if the user is a super admin and redirect accordingly
+      // Check if the user is IPMR (super admin) and redirect accordingly
       const userRole = await getUserRole(userCredential.user.uid);
       
-      if (userRole === 'super_admin') {
+      if (userRole === 'IPMR') {
         navigate('/super-admin', { replace: true });
       } else {
         // Navigate to the page they were trying to access, or home if they came directly to login

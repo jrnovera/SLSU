@@ -95,7 +95,13 @@ function SuperAdminDashboard() {
     fetchIPs(barangayName === '' ? null : barangayName);
   };
 
-  const handleAdd = () => setShowAddForm(true);
+  const handleAdd = () => {
+  if (!currentUser) {
+    console.warn('Auth not ready yet; please wait a second.');
+    return;
+  }
+  setShowAddForm(true);
+};
 
   const handleAddSubmit = async (formData) => {
     try {
@@ -274,9 +280,9 @@ function SuperAdminDashboard() {
     : 'All Indigenous People in Catanauan, Quezon';
 
   return (
-    <div className="min-h-screen bg-[#F7F9FB] mt-20">
+    <div className="min-h-screen bg-[#dcdcdc] mt-20 ">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         {/* Top Controls */}
         <div className="bg-white px-6 py-4 rounded-md shadow mb-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -354,9 +360,9 @@ function SuperAdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow mb-4 overflow-hidden border border-gray-300">
+        <div className="rounded-xl mb-4 overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4">
             <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
             {hasSearch && (
               <p className="mt-1 text-sm text-gray-500">

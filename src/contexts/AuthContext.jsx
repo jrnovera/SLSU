@@ -4,7 +4,10 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  updateProfile
+  updateProfile,
+  signInAnonymously,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
@@ -57,7 +60,10 @@ export function AuthProvider({ children }) {
     try {
       const userDoc = await getDoc(doc(db, "users", uid));
       if (userDoc.exists()) {
-        return userDoc.data().role;
+        const rawRole = userDoc.data().role || 'user';
+        if (rawRole === 'super_admin') return 'IPMR';
+        if (rawRole === 'admin') return 'Chieftain';
+        return rawRole;
       }
       return null;
     } catch (error) {
@@ -66,21 +72,35 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Listen for auth state changes
+  // Listen for auth state changes and ensure an authenticated session (anonymous if needed)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const role = await getUserRole(user.uid);
-        setCurrentUser(user);
-        setUserRole(role);
-      } else {
-        setCurrentUser(null);
-        setUserRole(null);
-      }
-      setLoading(false);
-    });
+    let unsub = () => {};
+    (async () => {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+      } catch (_) {}
 
-    return unsubscribe;
+      unsub = onAuthStateChanged(auth, async (user) => {
+        try {
+          if (!user) {
+            // Ensure we are authenticated for rules that require request.auth
+            const anon = await signInAnonymously(auth);
+            user = anon.user;
+          }
+          const role = await getUserRole(user.uid);
+          setCurrentUser(user);
+          setUserRole(role);
+        } catch (err) {
+          console.error('Auth init error:', err);
+          setCurrentUser(null);
+          setUserRole(null);
+        } finally {
+          setLoading(false);
+        }
+      });
+    })();
+
+    return () => unsub();
   }, []);
 
   const value = {

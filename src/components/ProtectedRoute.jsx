@@ -44,7 +44,7 @@ export function AdminRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  if (userRole !== 'admin' && userRole !== 'super_admin') {
+  if (userRole !== 'Chieftain' && userRole !== 'IPMR') {
     return <Navigate to="/unauthorized" state={{ from: location }} replace />;
   }
   
@@ -70,7 +70,7 @@ export function SuperAdminRoute({ children }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  if (userRole !== 'super_admin') {
+  if (userRole !== 'IPMR') {
     return <Navigate to="/unauthorized" state={{ from: location }} replace />;
   }
   

@@ -10,7 +10,7 @@ function Signup() {
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('user'); 
+  const [role, setRole] = useState('Chieftain'); 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
@@ -40,9 +40,9 @@ function Signup() {
       const userCredential = await signup(email, password, displayName, role);
       
       // Redirect based on role
-      if (role === 'super_admin') {
+      if (role === 'IPMR') {
         navigate('/super-admin');
-      } else if (role === 'admin') {
+      } else if (role === 'Chieftain') {
         navigate('/admin');
       } else {
         navigate('/home');
@@ -136,9 +136,8 @@ function Signup() {
               onChange={(e) => setRole(e.target.value)}
               className="form-input"
             >
-             
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super Admin</option>
+              <option value="Chieftain">Chieftain</option>
+              <option value="IPMR">IPMR</option>
             </select>
           </div>
           

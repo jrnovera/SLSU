@@ -2,22 +2,24 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB44NyIlAI8pBqT5j2YrtIwdfguy11rmvc",
-  authDomain: "rkis-32486.firebaseapp.com",
-  projectId: "rkis-32486",
-  storageBucket: "rkis-32486.firebasestorage.app",
-  messagingSenderId: "67596423859",
-  appId: "1:67596423859:web:2d166e0e5931b5404e96c6",
-  measurementId: "G-MG3NK196P0"
+  apiKey: "AIzaSyAgviSnkIO5F_uinfJXEch9flf38osxgs8",
+  authDomain: "bantay-lahi-project.firebaseapp.com",
+  projectId: "bantay-lahi-project",
+  storageBucket: "bantay-lahi-project.appspot.com",
+  messagingSenderId: "490782422814",
+  appId: "1:490782422814:web:607aa9fe5b59ba823f7b0f",
+  measurementId: "G-9K2VVX5XVG"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
 
@@ -29,7 +31,11 @@ export const getUserRole = async (uid) => {
     
     if (userSnap.exists()) {
       const userData = userSnap.data();
-      return userData.role || 'user'; // Default to 'user' if role is not specified
+      const rawRole = userData.role || 'user';
+      // Map legacy roles to new roles for backward compatibility
+      if (rawRole === 'super_admin') return 'IPMR';
+      if (rawRole === 'admin') return 'Chieftain';
+      return rawRole;
     }
     
     return 'user'; // Default role
