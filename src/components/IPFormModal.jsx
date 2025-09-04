@@ -474,14 +474,14 @@ function IPFormModal({
 
           {/* Lineage */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Lineage:</label>
+            <label className="col-span-3 font-semibold text-gray-700">Tribe:</label>
             <select
               name="lineage"
               value={formData.lineage}
               onChange={handleInputChange}
               className="col-span-9 input-style"
             >
-              <option value="">Select Lineage</option>
+              <option value="">Select Tribe</option>
               {LINEAGE_OPTIONS.map((opt) => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
