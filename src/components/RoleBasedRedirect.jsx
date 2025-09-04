@@ -43,9 +43,9 @@ function RoleBasedRedirect() {
 
   // Redirect based on user role
   if (userRole === 'IPMR') {
-    return <Navigate to="/super-admin" replace />;
-  } else if (userRole === 'Chieftain') {
     return <Navigate to="/admin" replace />;
+  } else if (userRole === 'Chieftain') {
+    return <Navigate to="/super-admin" replace />;
   } else {
     return <Navigate to="/home" replace />;
   }

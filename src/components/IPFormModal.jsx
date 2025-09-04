@@ -6,6 +6,24 @@ import { storage } from "../firebase/config";
 import { useAuth } from "../contexts/AuthContext";
 import CameraCaptureModal from "./CameraCaptureModal"; // ⬅️ camera modal
 
+// Lineage options based on provided list
+const LINEAGE_OPTIONS = [
+  "Aeta/Agta/Ayta",
+  "Ifugao",
+  "Kalinga",
+  "Bontoc",
+  "Ibaloi",
+  "Isneg (or Isnag)",
+  "Tingguian (Itneg)",
+  "Ilongot (or Bugkalot)",
+  "Gaddang",
+  "Kankaney",
+  "Kalanguya",
+  "Iwak",
+  "Remontado",
+  "Dumagat",
+];
+
 const FAMILY_DEFAULT = {
   father: "",
   mother: "",
@@ -457,7 +475,17 @@ function IPFormModal({
           {/* Lineage */}
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Lineage:</label>
-            <input type="text" name="lineage" value={formData.lineage} onChange={handleInputChange} className="col-span-9 input-style" />
+            <select
+              name="lineage"
+              value={formData.lineage}
+              onChange={handleInputChange}
+              className="col-span-9 input-style"
+            >
+              <option value="">Select Lineage</option>
+              {LINEAGE_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
           </div>
 
           {/* Barangay */}

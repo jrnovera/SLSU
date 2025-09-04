@@ -41,9 +41,9 @@ function Signup() {
       
       // Redirect based on role
       if (role === 'IPMR') {
-        navigate('/super-admin');
-      } else if (role === 'Chieftain') {
         navigate('/admin');
+      } else if (role === 'Chieftain') {
+        navigate('/super-admin');
       } else {
         navigate('/home');
       }
@@ -68,7 +68,7 @@ function Signup() {
     <div className="signup-container">
       <div className="signup-card">
         <div className="signup-header">
-          <h1>Katutubo IS</h1>
+          <h1>Bantay Lahi</h1>
           <h2>Create Account</h2>
         </div>
         

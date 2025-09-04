@@ -51,7 +51,7 @@ const Navbar = () => {
       <header className="fixed top-0 left-0 w-full bg-white shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           {/* Logo */}
-          <div className="text-2xl font-bold text-black">Katutubo IS</div>
+          <div className="text-2xl font-bold text-black">Bantay Lahi</div>
 
           {/* Navigation */}
           <nav className="flex items-center gap-6">

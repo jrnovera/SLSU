@@ -24,11 +24,11 @@ function Login() {
     try {
       const userCredential = await login(email, password);
       
-      // Check if the user is IPMR (super admin) and redirect accordingly
+      // Check if the user is IPMR (admin) and redirect accordingly
       const userRole = await getUserRole(userCredential.user.uid);
       
       if (userRole === 'IPMR') {
-        navigate('/super-admin', { replace: true });
+        navigate('/admin', { replace: true });
       } else {
         // Navigate to the page they were trying to access, or home if they came directly to login
         navigate(from, { replace: true });
@@ -52,7 +52,7 @@ function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Katutubo IS</h1>
+          <h1>Bantay Lahi</h1>
           <h2>Login</h2>
         </div>
         
