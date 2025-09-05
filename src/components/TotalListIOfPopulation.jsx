@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import ProfileViewModal from './ProfileViewModal';
+import IPFormModal from './IPFormModal';
+import ConfirmationModal from './ConfirmationModal';
 import { allBarangays } from './Brgylist';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { FaEdit, FaTrash, FaEye, FaPlus } from 'react-icons/fa';
 
 /* small debounce hook */
 function useDebouncedValue(value, delay = 200) {
@@ -58,18 +63,28 @@ const formatDOB = (val) => {
   return `${mm}/${dd}/${yy}`;
 };
 
-function TotalListIOfPopulation({ populationData = [], category = null }) {
+function TotalListIOfPopulation({ populationData = [], category = null, onDataChange }) {
   const location = useLocation();
-
+  
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedTerm = useDebouncedValue(searchTerm, 220);
 
   const [selectedBarangay, setSelectedBarangay] = useState('All Barangay');
+  const [selectedFilter, setSelectedFilter] = useState('Show All');
   const [filteredData, setFilteredData] = useState([]);
   const [pageTitle, setPageTitle] = useState('Total Population');
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // CRUD state
+  const [selectedForAction, setSelectedForAction] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [personToEdit, setPersonToEdit] = useState(null);
+  const [personToDelete, setPersonToDelete] = useState(null);
 
   const [suggestions, setSuggestions] = useState([]);
   const [showSug, setShowSug] = useState(false);
@@ -82,10 +97,13 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
     []
   );
 
-  useEffect(() => { setLoading(false); }, [populationData]);
+  useEffect(() => { 
+    setLoading(false); 
+    setFilteredData(populationData);
+  }, [populationData]);
 
   useEffect(() => {
-    if (!category) { setPageTitle('Total Population'); return; }
+    if (!category) { setPageTitle('Master List'); return; }
     let title = 'Total Population';
     if (category === 'male') title = 'Total Male Population';
     else if (category === 'female') title = 'Total Female Population';
@@ -132,11 +150,26 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
         return name.includes(term) || brgy.includes(term) || ageMatch;
       });
     }
+    // Apply filter
+    if (selectedFilter !== 'Show All') {
+      if (selectedFilter === 'Male' || selectedFilter === 'Female') {
+        filtered = filtered.filter((p) => p.gender === selectedFilter);
+      } else if (selectedFilter === 'Student') {
+        filtered = filtered.filter((p) => isStudentOccupation(p.occupation));
+      } else if (selectedFilter === 'Non-Student') {
+        filtered = filtered.filter((p) => !isStudentOccupation(p.occupation) && !isEmptyOccupation(p.occupation));
+      } else if (selectedFilter === 'Unemployed') {
+        filtered = filtered.filter((p) => isEmptyOccupation(p.occupation));
+      } else if (selectedFilter === 'PWD') {
+        filtered = filtered.filter((p) => hasHealthCondition(p.healthCondition));
+      }
+    }
+
     if (selectedBarangay !== 'All Barangay') {
       filtered = filtered.filter((p) => p.barangay === selectedBarangay);
     }
     setFilteredData(filtered);
-  }, [searchTerm, selectedBarangay, populationData, category]);
+  }, [searchTerm, selectedBarangay, selectedFilter, populationData, category]);
 
   useEffect(() => {
     const t = debouncedTerm.trim().toLowerCase();
@@ -188,7 +221,117 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
 
   const openModal = (person) => { setSelectedPerson(person); setModalIsOpen(true); };
   const closeModal = () => { setModalIsOpen(false); setSelectedPerson(null); };
-  const clearFilters = () => { setSearchTerm(''); setSelectedBarangay('All Barangay'); };
+  const clearFilters = () => { setSearchTerm(''); setSelectedBarangay('All Barangay'); setSelectedFilter('Show All'); };
+  
+  // CRUD handlers
+  const handleAdd = () => {
+    setShowAddModal(true);
+  };
+
+  const handleUpdate = (person) => {
+    setSelectedForAction(person);
+    setPersonToEdit(person);
+    setShowEditModal(true);
+  };
+
+  const requestDelete = (person) => {
+    setSelectedForAction(person);
+    setPersonToDelete(person);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowAddModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+  };
+
+  const handleAddSubmit = async (formData) => {
+    try {
+      setIsProcessing(true);
+      const newPersonData = {
+        ...formData,
+        createdAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, 'indigenous_people'), newPersonData);
+      const newPerson = { id: docRef.id, ...newPersonData };
+      
+      // Update local data
+      const updatedData = [...filteredData, newPerson];
+      setFilteredData(updatedData);
+      
+      // Notify parent component if callback exists
+      if (onDataChange) onDataChange(updatedData);
+      
+      handleCloseForm();
+      alert('Person added successfully!');
+    } catch (error) {
+      console.error('Error adding person:', error);
+      alert(`Error adding person: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleUpdateSubmit = async (formData) => {
+    if (!personToEdit?.id) return;
+    
+    try {
+      setIsProcessing(true);
+      const updateData = {
+        ...formData,
+        updatedAt: serverTimestamp(),
+      };
+
+      const personRef = doc(db, 'indigenous_people', personToEdit.id);
+      await updateDoc(personRef, updateData);
+      
+      // Update local data
+      const updatedData = filteredData.map(p => 
+        p.id === personToEdit.id ? { ...p, ...updateData } : p
+      );
+      setFilteredData(updatedData);
+      setSelectedForAction(null);
+      
+      // Notify parent component if callback exists
+      if (onDataChange) onDataChange(updatedData);
+      
+      handleCloseForm();
+      alert('Person updated successfully!');
+    } catch (error) {
+      console.error('Error updating person:', error);
+      alert(`Error updating person: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!personToDelete?.id) return;
+    
+    try {
+      setIsProcessing(true);
+      const personRef = doc(db, 'indigenous_people', personToDelete.id);
+      await deleteDoc(personRef);
+      
+      // Update local data
+      const updatedData = filteredData.filter(p => p.id !== personToDelete.id);
+      setFilteredData(updatedData);
+      setSelectedForAction(null);
+      
+      // Notify parent component if callback exists
+      if (onDataChange) onDataChange(updatedData);
+      
+      handleCloseForm();
+      alert('Person deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting person:', error);
+      alert(`Error deleting person: ${error.message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const hasSearch = searchTerm.trim().length > 0;
   const headerTitle = hasSearch ? `Results for "${searchTerm.trim()}"` : pageTitle;
@@ -209,8 +352,35 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+        {/* Filters and Add Button */}
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row items-center">
+          <button
+            onClick={handleAdd}
+            disabled={isProcessing}
+            className="flex items-center justify-center gap-2 rounded-full bg-[#2c526b] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-400 disabled:opacity-50"
+          >
+            <FaPlus size={14} />
+            Add New
+          </button>
+          
+          {/* Filter Dropdown */}
+          <select
+            value={selectedFilter}
+            onChange={(e) => setSelectedFilter(e.target.value)}
+            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-200 sm:w-36"
+          >
+            <option value="Show All">All Filters</option>
+            <optgroup label="Gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </optgroup>
+            <optgroup label="Status">
+              <option value="Student">Student</option>
+              <option value="Non-Student">Non-Student</option>
+              <option value="Unemployed">Unemployed</option>
+              <option value="PWD">PWD</option>
+            </optgroup>
+          </select>
           <div className="relative flex-1 sm:w-72" ref={sugRef}>
             <input
               ref={inputRef}
@@ -255,7 +425,7 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
             ))}
           </select>
 
-          {(searchTerm || selectedBarangay !== 'All Barangay') && (
+          {(searchTerm || selectedBarangay !== 'All Barangay' || selectedFilter !== 'Show All') && (
             <button
               onClick={clearFilters}
               className="rounded-full bg-[#2b78c6] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#1a5c9e]"
@@ -276,7 +446,7 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
                 <th className={thCls}>Gender</th>
                 <th className={thCls}>Health Condition</th>
                 <th className={thCls}>Barangay</th>
-                <th className={thCls}></th>
+                <th className={thCls} colSpan="3">Actions</th>
               </tr>
             </thead>
 
@@ -284,16 +454,26 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
               {loading ? (
                 [...Array(12)].map((_, i) => (
                   <tr key={`skeleton-${i}`} className="odd:bg-white even:bg-slate-50">
-                    {Array.from({ length: 7 }).map((__, j) => (
+                    {Array.from({ length: 6 }).map((__, j) => (
                       <td key={j} className={tdCls}>
                         <div className="h-3 w-full max-w-[160px] rounded bg-slate-200" />
+                      </td>
+                    ))}
+                    {/* Action button placeholders */}
+                    {Array.from({ length: 3 }).map((__, j) => (
+                      <td key={`action-${j}`} className={tdCls + " text-center"}>
+                        <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-200" />
                       </td>
                     ))}
                   </tr>
                 ))
               ) : filteredData.length > 0 ? (
                 filteredData.map((person, idx) => (
-                  <tr key={person.id} className="odd:bg-white even:bg-slate-50 hover:bg-slate-100">
+                  <tr 
+                    key={person.id} 
+                    className={`cursor-pointer ${selectedForAction?.id === person.id ? 'bg-blue-100 !important' : 'odd:bg-white even:bg-slate-50 hover:bg-slate-100'}`}
+                    onClick={() => setSelectedForAction(person)}
+                  >
                     <td className={tdCls}>
                       <span className="font-medium">
                         {`${idx + 1}. ${person.lastName || ''}, ${person.firstName || ''}`}
@@ -304,19 +484,49 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
                     <td className={tdCls}>{person.gender || 'N/A'}</td>
                     <td className={tdCls}>{person.healthCondition || 'None'}</td>
                     <td className={tdCls}>{person.barangay || 'N/A'}</td>
-                    <td className={tdCls}>
+                    <td className={tdCls + " text-center"}>
                       <button
-                        onClick={() => openModal(person)}
-                        className="text-red-600 underline underline-offset-2 hover:text-red-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openModal(person);
+                        }}
+                        className="inline-flex items-center justify-center p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        title="View Profile"
                       >
-                        View Profile
+                        <FaEye />
+                      </button>
+                    </td>
+                    <td className={tdCls + " text-center"}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleUpdate(person);
+                        }}
+                        className="inline-flex items-center justify-center p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                        title="Edit"
+                        disabled={isProcessing}
+                      >
+                        <FaEdit />
+                      </button>
+                    </td>
+                    <td className={tdCls + " text-center"}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestDelete(person);
+                        }}
+                        className="inline-flex items-center justify-center p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                        title="Delete"
+                        disabled={isProcessing}
+                      >
+                        <FaTrash />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className={`${tdCls} text-center py-10 bg-white`}>
+                  <td colSpan={9} className={`${tdCls} text-center py-10 bg-white`}>
                     No data found — try adjusting your search or filters.
                   </td>
                 </tr>
@@ -326,8 +536,39 @@ function TotalListIOfPopulation({ populationData = [], category = null }) {
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Modals */}
       <ProfileViewModal isOpen={modalIsOpen} onClose={closeModal} person={selectedPerson} />
+      
+      {/* Add Person Modal */}
+      <IPFormModal
+        isOpen={showAddModal}
+        onClose={handleCloseForm}
+        onSubmit={handleAddSubmit}
+        isProcessing={isProcessing}
+      />
+      
+      {/* Edit Person Modal */}
+      <IPFormModal
+        isOpen={showEditModal}
+        onClose={handleCloseForm}
+        onSubmit={handleUpdateSubmit}
+        initialData={personToEdit}
+        isProcessing={isProcessing}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleCloseForm}
+        onConfirm={handleDeleteConfirm}
+        title="Confirm Delete"
+        message={`Are you sure you want to delete ${personToDelete?.firstName} ${personToDelete?.lastName}?`}
+        confirmText="Yes"
+        cancelText="No"
+        isProcessing={isProcessing}
+        personToDelete={personToDelete}
+      />
+    
     </div>
   );
 }

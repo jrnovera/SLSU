@@ -20,7 +20,7 @@ function CommunityStats() {
   const navigate = useNavigate();
 
   const [stats, setStats] = useState([
-    { icon: totalIcon, number: '0', label: 'Total Population', link: '/total-population', category: null },
+    { icon: totalIcon, number: '0', label: 'Master List', link: '/total-population', category: null },
     { icon: maleIcon, number: '0', label: 'Male', link: '/total-male', category: 'male' },
     { icon: femaleIcon, number: '0', label: 'Female', link: '/total-female', category: 'female' },
     { icon: studentIcon, number: '0', label: 'Students', link: '/total-students', category: 'students' },
@@ -118,7 +118,7 @@ function CommunityStats() {
         const healthTotal = withHealth + noHealth;
 
         setStats([
-          { icon: totalIcon, number: String(totalCount), label: 'Total Population', link: '/total-population', category: null },
+          { icon: totalIcon, number: String(totalCount), label: 'Master List', link: '/total-population', category: null },
           { icon: maleIcon, number: String(maleCount), label: 'Male', link: '/total-male', category: 'male' },
           { icon: femaleIcon, number: String(femaleCount), label: 'Female', link: '/total-female', category: 'female' },
           { icon: studentIcon, number: String(studentsCount), label: 'Students', link: '/total-students', category: 'students' },

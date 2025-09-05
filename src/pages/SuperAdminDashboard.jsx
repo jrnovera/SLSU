@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import { allBarangays } from '../components/Brgylist';
-import IPFormModal from '../components/IPFormModal';
 import ProfileViewModal from '../components/ProfileViewModal';
 import {
   collection,
-  addDoc,
   getDocs,
   doc,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   getDoc,
@@ -36,19 +33,15 @@ function SuperAdminDashboard() {
   const [ipList, setIpList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBarangay, setSelectedBarangay] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [selectedIp, setSelectedIp] = useState(null);
 
   // Profile modal
   const [showProfileView, setShowProfileView] = useState(false);
   const [profileData, setProfileData] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
-  // 🔴 Delete confirmation modal
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [ipToDelete, setIpToDelete] = useState(null);
+ 
 
   /* suggestions */
   const [suggestions, setSuggestions] = useState([]);
@@ -95,76 +88,19 @@ function SuperAdminDashboard() {
     fetchIPs(barangayName === '' ? null : barangayName);
   };
 
-  const handleAdd = () => {
-  if (!currentUser) {
-    console.warn('Auth not ready yet; please wait a second.');
-    return;
-  }
-  setShowAddForm(true);
-};
-
-  const handleAddSubmit = async (formData) => {
-    try {
-      await addDoc(collection(db, 'indigenousPeople'), formData);
-      fetchIPs(selectedBarangay?.name || null);
-      setShowAddForm(false);
-    } catch (error) {
-      console.error('Error adding IP:', error);
-    }
-  };
+  
 
   const handleCloseForm = () => {
-    setShowAddForm(false);
-    setShowUpdateForm(false);
     setShowProfileView(false);
     setProfileData(null);
   };
 
-  const handleUpdate = (ip) => {
-    setSelectedIp(ip);
-    setShowUpdateForm(true);
-  };
 
-  const handleUpdateSubmit = async (formData) => {
-    if (!selectedIp) return;
-    try {
-      const ipRef = doc(db, 'indigenousPeople', selectedIp.id);
-      await updateDoc(ipRef, formData);
-      fetchIPs(selectedBarangay?.name || null);
-      setShowUpdateForm(false);
-      setSelectedIp(null);
-    } catch (error) {
-      console.error('Error updating IP:', error);
-    }
-  };
 
   // 🔴 Open confirmation modal instead of window.confirm
-  const requestDelete = (ip) => {
-    setIpToDelete(ip);
-    setShowDeleteModal(true);
-  };
+ 
+ 
 
-  const confirmDelete = async () => {
-    if (!ipToDelete) return;
-    try {
-      await deleteDoc(doc(db, 'indigenousPeople', ipToDelete.id));
-      setIpList((prev) => prev.filter((item) => item.id !== ipToDelete.id));
-      if (showProfileView && profileData?.id === ipToDelete.id) {
-        setShowProfileView(false);
-        setProfileData(null);
-      }
-    } catch (error) {
-      console.error('Error deleting IP:', error);
-    } finally {
-      setShowDeleteModal(false);
-      setIpToDelete(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setIpToDelete(null);
-  };
 
   // View profile
   const handleViewProfile = async (ip) => {
@@ -188,13 +124,36 @@ function SuperAdminDashboard() {
   /* filtering (case-insensitive, name or barangay) */
   const filteredList = useMemo(() => {
     const t = searchTerm.trim().toLowerCase();
-    if (!t) return ipList;
-    return ipList.filter((ip) => {
-      const n = (ip.name || '').toLowerCase();
-      const b = (ip.barangay || '').toLowerCase();
-      return n.includes(t) || b.includes(t);
-    });
-  }, [ipList, searchTerm]);
+    let filtered = ipList;
+    
+    // Apply search filter
+    if (t) {
+      filtered = filtered.filter((ip) => {
+        const n = (ip.name || '').toLowerCase();
+        const b = (ip.barangay || '').toLowerCase();
+        const l = (ip.lineage || '').toLowerCase();
+        return n.includes(t) || b.includes(t) || l.includes(t);
+      });
+    }
+    
+    // Apply sorting
+    if (sortConfig.key) {
+      filtered = [...filtered].sort((a, b) => {
+        const aValue = (a[sortConfig.key] || '').toLowerCase();
+        const bValue = (b[sortConfig.key] || '').toLowerCase();
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    return filtered;
+  }, [ipList, searchTerm, sortConfig]);
 
   /* suggestions (names + barangays) */
   useEffect(() => {
@@ -278,6 +237,28 @@ function SuperAdminDashboard() {
     : selectedBarangay
     ? `Barangay ${selectedBarangay.name} - List of IPs`
     : 'All Indigenous People in Catanauan, Quezon';
+    
+  // Handle column sorting
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    } else if (sortConfig.key === key && sortConfig.direction === 'descending') {
+      key = null;
+      direction = null;
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  // Get sort icon based on current sort state
+  const getSortIcon = (columnName) => {
+    if (sortConfig.key !== columnName) {
+      return <FaSort className="inline ml-1 text-gray-400" />;
+    }
+    return sortConfig.direction === 'ascending' ? 
+      <FaSortUp className="inline ml-1 text-blue-600" /> : 
+      <FaSortDown className="inline ml-1 text-blue-600" />;
+  };
 
   return (
     <div className="min-h-screen bg-[#dcdcdc] mt-20 ">
@@ -305,12 +286,6 @@ function SuperAdminDashboard() {
                 ))}
               </select>
 
-              <button
-                onClick={handleAdd}
-                className="bg-[#194d62] text-white font-bold text-sm px-6 py-2 rounded-sm hover:bg-[#3497da] transition"
-              >
-                Add IP
-              </button>
             </div>
 
             {/* Right: Search with suggestions */}
@@ -336,33 +311,35 @@ function SuperAdminDashboard() {
 
               {/* Suggestion list */}
               {showSug && suggestions.length > 0 && (
-                <ul className="absolute z-10 mt-1 w-full rounded-md border border-gray-200 bg-white shadow-md max-h-72 overflow-auto">
-                  {suggestions.map((s, i) => (
-                    <li
-                      key={`${s.type}-${s.label}-${i}`}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        selectSuggestion(s);
-                      }}
-                      className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${
-                        i === activeIndex ? 'bg-gray-100' : 'bg-white'
-                      }`}
-                    >
-                      <span className="truncate">{s.label}</span>
-                      <span className="ml-3 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-500">
-                        {s.type}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <table className="w-full border-collapse bg-white shadow-sm" style={{ borderSpacing: 0, borderWidth: '1px 0 0 1px', borderStyle: 'solid', borderColor: '#d1d1d1' }}>
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border border-[#c0c0c0] cursor-pointer select-none">
+                        Suggestions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestions.map((s, i) => (
+                      <tr key={`${s.type}-${s.label}-${i}`}>
+                        <td className="px-4 py-2 text-center border border-[#d1d1d1]">
+                          <span className="truncate">{s.label}</span>
+                          <span className="ml-3 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-500">
+                            {s.type}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl mb-4 overflow-hidden">
+        <div className="rounded-xl mb-4 overflow-hidden bg-white shadow-md border-2 border-[#c0c0c0]">
           {/* Header */}
-          <div className="px-6 py-4">
+          <div className="px-6 py-4 border-b-2 border-[#c0c0c0] bg-[#f0f0f0]">
             <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
             {hasSearch && (
               <p className="mt-1 text-sm text-gray-500">
@@ -372,7 +349,7 @@ function SuperAdminDashboard() {
           </div>
 
           {/* Results */}
-          <div className="divide-y divide-gray-200">
+          <div className="overflow-x-auto">
             {loading ? (
               <p className="px-6 py-4 text-gray-500">Loading...</p>
             ) : filteredList.length === 0 ? (
@@ -381,60 +358,90 @@ function SuperAdminDashboard() {
                 {selectedBarangay ? ` in ${selectedBarangay.name}` : ''}.
               </p>
             ) : (
-              <ol>
-                {filteredList.map((ip, index) => (
-                  <li
-                    key={ip.id}
-                    className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition"
-                  >
-                    <span
-                      onClick={() => handleViewProfile(ip)}
-                      className="text-gray-800 font-medium cursor-pointer hover:underline"
+              <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
+                <thead className="bg-[#e9ecef]">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center">
+                        # <FaFilter className="ml-1 text-gray-400" />
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('name')} 
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
                     >
-                      {index + 1}. {ip.name}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewProfile(ip)}
-                        className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded hover:bg-[#194d62]"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleUpdate(ip)}
-                        className="bg-[#6998ab] text-sm px-3 py-1 text-white rounded hover:bg-[#194d62]"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => requestDelete(ip)} // 🔴 open modal
-                        className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded hover:bg-[#194d62]"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+                      <div className="flex items-center">
+                        Name {getSortIcon('name')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('barangay')} 
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center">
+                        Barangay {getSortIcon('barangay')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('lineage')} 
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center">
+                        Lineage {getSortIcon('lineage')}
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center justify-center">
+                        Actions
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredList.map((ip, index) => (
+                    <tr 
+                      key={ip.id} 
+                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fa]'} hover:bg-[#e8f4f9]`}
+                      style={{ transition: 'background-color 0.2s' }}
+                    >
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        {index + 1}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        <span 
+                          onClick={() => handleViewProfile(ip)} 
+                          className="text-gray-800 font-medium cursor-pointer hover:underline hover:text-blue-600"
+                        >
+                          {ip.name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {ip.barangay || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {ip.lineage || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => handleViewProfile(ip)}
+                            className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded border border-[#5a849a] hover:bg-[#194d62] transition-colors"
+                          >
+                            View
+                          </button>
+                        
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
       </div>
 
       {/* Modals */}
-      <IPFormModal
-        isOpen={showAddForm}
-        onClose={handleCloseForm}
-        onSubmit={handleAddSubmit}
-        selectedBarangay={selectedBarangay}
-      />
-      <IPFormModal
-        isOpen={showUpdateForm}
-        onClose={handleCloseForm}
-        onSubmit={handleUpdateSubmit}
-        initialData={selectedIp}
-        isEditing={true}
-      />
 
       <ProfileViewModal
         isOpen={showProfileView && !!profileData}
@@ -442,36 +449,7 @@ function SuperAdminDashboard() {
         person={profileData}
       />
 
-      {/* 🔴 Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 sm:p-8 text-center">
-            <h3 className="text-xl sm:text-2xl font-bold text-[#123645] pb-4 leading-snug">
-              Are you sure you want to delete{' '}
-              <span className="whitespace-nowrap">
-                {ipToDelete?.name ||
-                  `${ipToDelete?.lastName || ''}, ${ipToDelete?.firstName || ''} ${ipToDelete?.middleName || ''}`}
-              </span>
-              ?
-            </h3>
-
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={cancelDelete}
-                className="bg-gray-300 text-[#123645] font-semibold px-6 py-2.5 rounded-full hover:bg-gray-400 transition duration-200 w-24"
-              >
-                No
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="bg-[#2c526b] text-white font-semibold px-6 py-2.5 rounded-full hover:bg-[#1e3b50] transition duration-200 w-24"
-              >
-                Yes
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+    
     </div>
   );
 }

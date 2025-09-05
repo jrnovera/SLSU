@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import { FaUser } from 'react-icons/fa';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import profileImg from '../assets/icons/user.png'; // ✅ default avatar
 
 function formatDOB(dateOfBirth) {
@@ -27,6 +29,60 @@ const toArray = (val) => {
 };
 
 const ProfileViewModal = ({ isOpen, onClose, person }) => {
+  const [tribeStats, setTribeStats] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState('');
+
+  // Fetch tribe statistics when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    let cancelled = false;
+    const fetchTribeStats = async () => {
+      setStatsLoading(true);
+      setStatsError('');
+      try {
+        const snap = await getDocs(collection(db, 'indigenousPeople'));
+        const counts = {};
+        let total = 0;
+        
+        snap.forEach((doc) => {
+          const data = doc.data() || {};
+          let lineage = (data.lineage || '').toString().trim();
+          if (!lineage) lineage = 'Unknown';
+          counts[lineage] = (counts[lineage] || 0) + 1;
+          total += 1;
+        });
+        
+        // Convert to array with percentages, sorted by count
+        const statsArray = Object.entries(counts)
+          .map(([name, count]) => ({
+            name,
+            count,
+            percentage: total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6); // Show top 6 tribes
+        
+        if (!cancelled) {
+          setTribeStats(statsArray);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tribe statistics:', error);
+        if (!cancelled) {
+          setStatsError('Failed to load statistics');
+        }
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+        }
+      }
+    };
+    
+    fetchTribeStats();
+    return () => { cancelled = true; };
+  }, [isOpen]);
+
   if (!isOpen || !person) return null;
 
   const {
@@ -108,43 +164,60 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
           </div>
         </div>
 
-        {/* Column 2: Statistics (placeholder) */}
+        {/* Column 2: Tribe Statistics */}
         <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center shadow-sm">
           <h2 className="text-lg font-semibold text-center text-gray-800 border-b border-gray-200 pb-3 w-full">
-            Statistics
+            Tribe Distribution
           </h2>
 
-          <div className="flex flex-wrap justify-center gap-8 mt-6">
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-24 h-24">
-                <CircularProgressbar
-                  value={70}
-                  text="70%"
-                  styles={{
-                    path: { stroke: '#f59e0b' },
-                    trail: { stroke: '#e5e7eb' },
-                    text: { fill: '#1f2937', fontSize: '16px', fontWeight: 600 },
-                  }}
-                />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Aeta</p>
+          {statsLoading ? (
+            <div className="flex items-center justify-center mt-6">
+              <p className="text-sm text-gray-500">Loading statistics...</p>
             </div>
-
-            <div className="flex flex-col items-center space-y-2">
-              <div className="w-24 h-24">
-                <CircularProgressbar
-                  value={30}
-                  text="30%"
-                  styles={{
-                    path: { stroke: '#3b82f6' },
-                    trail: { stroke: '#e5e7eb' },
-                    text: { fill: '#1f2937', fontSize: '16px', fontWeight: 600 },
-                  }}
-                />
-              </div>
-              <p className="text-sm font-medium text-gray-600">Cebuano</p>
+          ) : statsError ? (
+            <div className="flex items-center justify-center mt-6">
+              <p className="text-sm text-red-500">{statsError}</p>
             </div>
-          </div>
+          ) : tribeStats.length === 0 ? (
+            <div className="flex items-center justify-center mt-6">
+              <p className="text-sm text-gray-500">No data available</p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-6 mt-6">
+              {tribeStats.map((tribe, index) => {
+                // Color palette for different tribes
+                const colors = [
+                  '#f59e0b', // amber
+                  '#3b82f6', // blue
+                  '#10b981', // emerald
+                  '#ef4444', // red
+                  '#8b5cf6', // violet
+                  '#f97316', // orange
+                ];
+                const color = colors[index % colors.length];
+                
+                return (
+                  <div key={tribe.name} className="flex flex-col items-center space-y-2">
+                    <div className="w-20 h-20">
+                      <CircularProgressbar
+                        value={parseFloat(tribe.percentage)}
+                        text={`${tribe.percentage}%`}
+                        styles={{
+                          path: { stroke: color },
+                          trail: { stroke: '#e5e7eb' },
+                          text: { fill: '#1f2937', fontSize: '14px', fontWeight: 600 },
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs font-medium text-gray-600 text-center max-w-20 truncate" title={tribe.name}>
+                      {tribe.name}
+                    </p>
+                    <p className="text-xs text-gray-500">({tribe.count})</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Column 3: Family Tree */}
@@ -153,11 +226,11 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
 
           <div className="flex flex-col items-center space-y-16">
             {/* Parents */}
-            <div className="relative flex flex-col items-center w-full">
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 w-32 h-1 bg-yellow-400 z-0" />
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 w-1 h-12 bg-yellow-400 z-0" />
+            <div className="relative flex flex-col items-center w-full pb-8">
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 w-40 h-1 bg-yellow-400 z-0" />
+              <div className="absolute top-12 left-1/2 -translate-x-1/2 w-1 h-14 bg-yellow-400 z-0" />
 
-              <div className="flex justify-center gap-24 relative z-10">
+              <div className="flex justify-center gap-16 md:gap-24 relative z-10">
                 <div className="flex flex-col items-center space-y-2">
                   <FaUser className="text-gray-700" size={50} />
                   <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{father}</span>
@@ -172,57 +245,60 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
             </div>
 
             {/* Middle Level: Siblings + You + Spouse */}
-            <div className="relative w-full flex flex-col items-center">
-              <div className="relative w-full max-w-4xl h-16 flex items-center justify-center">
-                <div className="absolute top-8 left-0 right-0 h-1 bg-yellow-400 z-0" />
-                <div className="absolute top-8 left-1/2 -translate-x-1/2 h-12 w-1 bg-yellow-400 z-0" />
+            <div className="relative w-full">
+              {/* connecting bar behind */}
+              <div className="absolute top-10 left-0 right-0 h-1 bg-yellow-400 z-0" />
+              <div className="absolute top-10 left-1/2 -translate-x-1/2 h-16 w-1 bg-yellow-400 z-0" />
 
-                <div className="flex justify-center gap-12 z-10 relative flex-wrap">
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-16 mt-6">
+                {/* Siblings on the left */}
+                <div className="flex flex-wrap justify-center md:justify-end gap-6">
                   {parsedSiblings.map((sibling, idx) => (
-                    <div key={`sibling-${idx}`} className="flex flex-col items-center space-y-2">
+                    <div key={`sibling-${idx}`} className="flex flex-col items-center space-y-2 min-w-[96px]">
                       <FaUser className="text-gray-700" size={45} />
                       <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{sibling}</span>
                       <small className="text-xs text-gray-500">(Sibling)</small>
                     </div>
                   ))}
-                  {/* YOU */}
-                  <div className="flex flex-col items-center space-y-2">
-                    <FaUser className="text-red-500" size={45} />
-                    <span className="font-semibold text-red-500 text-center max-w-24 text-sm">{fullName}</span>
-                    <small className="text-xs text-red-400">(You)</small>
-                  </div>
-                  {/* SPOUSE */}
-                  <div className="flex flex-col items-center space-y-2">
-                    <FaUser className="text-gray-700" size={45} />
-                    <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{spouse}</span>
-                    <small className="text-xs text-gray-500">(Spouse)</small>
-                  </div>
+                  {parsedSiblings.length === 0 && (
+                    <div className="text-xs text-gray-400 md:text-right">No siblings</div>
+                  )}
+                </div>
+
+                {/* YOU in the center */}
+                <div className="flex flex-col items-center space-y-2">
+                  <FaUser className="text-red-500" size={48} />
+                  <span className="font-semibold text-red-500 text-center max-w-28 text-sm">{fullName}</span>
+                  <small className="text-xs text-red-400">(You)</small>
+                </div>
+
+                {/* Spouse on the right */}
+                <div className="flex flex-col items-center md:items-start space-y-2">
+                  <FaUser className="text-gray-700" size={45} />
+                  <span className="font-semibold text-gray-800 text-center md:text-left max-w-28 text-sm">{spouse}</span>
+                  <small className="text-xs text-gray-500">(Spouse)</small>
                 </div>
               </div>
+            </div>
 
-              {/* Children Section */}
-              {parsedChildren.length > 0 && (
-                <div className="relative w-full mt-16 flex flex-col items-center">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-12 bg-yellow-400 z-0" />
-                  {parsedChildren.length > 1 && (
-                    <div className="absolute top-12 left-1/2 -translate-x-1/2 w-64 h-1 bg-yellow-400 z-0" />
-                  )}
-
-                  <div className="flex justify-center gap-12 flex-wrap relative z-10 mt-12">
-                    {parsedChildren.map((child, idx) => (
-                      <div key={`child-${idx}`} className="flex flex-col items-center space-y-2">
-                        <FaUser className="text-gray-700" size={40} />
-                        <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{child}</span>
-                        <small className="text-xs text-gray-500">(Child)</small>
-                      </div>
-                    ))}
+            {/* Children */}
+            <div className="relative w-full mt-6">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 h-4 w-1 bg-yellow-400 z-0" />
+              <div className="relative z-10 flex justify-center gap-8 flex-wrap mt-2">
+                {parsedChildren.map((child, idx) => (
+                  <div key={`child-${idx}`} className="flex flex-col items-center space-y-2 min-w-[88px]">
+                    <FaUser className="text-gray-700" size={40} />
+                    <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{child}</span>
+                    <small className="text-xs text-gray-500">(Child)</small>
                   </div>
-                </div>
-              )}
+                ))}
+                {parsedChildren.length === 0 && (
+                  <div className="text-xs text-gray-400">No children</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-
       </div>
     </Modal>
   );
