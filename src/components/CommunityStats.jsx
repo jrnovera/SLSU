@@ -41,7 +41,9 @@ function CommunityStats() {
   // Health classifier
   const classifyHealth = (val) => {
     const s = String(val ?? '').trim().toLowerCase();
-    if (!s || s === 'none' || s === 'healthy' || s === 'no health' || s === 'no health condition' || s === 'n/a') {
+    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === 'healthy' || 
+        s === 'no health condition' || s === 'no health' || s === 'no condition' || 
+        s === 'good' || s === '-' || s === 'normal') {
       return 'no_health';
     }
     return 'with_health';

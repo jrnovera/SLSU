@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserRole } from '../firebase/config';
@@ -13,13 +13,50 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // We're intentionally not loading saved form data to ensure fields are empty after logout
+  
   // Get the page they were trying to access before being redirected to login
   const from = location.state?.from?.pathname || "/";
 
+  // Reset form fields on component mount
+  useEffect(() => {
+    // Clear fields on mount
+    setEmail('');
+    setPassword('');
+    
+    // Force reset any browser-saved values
+    const resetTimer = setTimeout(() => {
+      setEmail('');
+      setPassword('');
+      
+      // Try to reset any form elements directly
+      const emailInput = document.getElementById('email');
+      const passwordInput = document.getElementById('password');
+      if (emailInput) emailInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+    }, 100);
+    
+    return () => clearTimeout(resetTimer);
+  }, []);
+
+  // Function to clear form fields completely
+  const clearFormFields = () => {
+    setEmail('');
+    setPassword('');
+    
+    // Try to reset any form elements directly
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    if (emailInput) emailInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+  };
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // We're not saving form data to ensure fields are empty after logout
     
     try {
       const userCredential = await login(email, password);
@@ -33,6 +70,9 @@ function Login() {
         // Navigate to the page they were trying to access, or home if they came directly to login
         navigate(from, { replace: true });
       }
+      
+      // Clear password field after successful login
+      setPassword('');
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message);
@@ -58,7 +98,13 @@ function Login() {
         
         {error && <div className="error-message">{error}</div>}
         
-        <form onSubmit={handleLogin} className="login-form">
+        {/* Hidden dummy form to trick browser autofill */}
+        <div style={{ display: 'none' }}>
+          <input type="text" name="email" />
+          <input type="password" name="password" />
+        </div>
+        
+        <form onSubmit={handleLogin} className="login-form" autoComplete="off" spellCheck="false" data-form-type="other">
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -69,6 +115,11 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_email"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="email"
             />
           </div>
           
@@ -82,6 +133,11 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="password"
             />
           </div>
           

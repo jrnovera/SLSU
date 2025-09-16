@@ -248,9 +248,8 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
             <div className="relative w-full">
               {/* connecting bar behind */}
               <div className="absolute top-10 left-0 right-0 h-1 bg-yellow-400 z-0" />
-              <div className="absolute top-10 left-1/2 -translate-x-1/2 h-16 w-1 bg-yellow-400 z-0" />
 
-              <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-16 mt-6">
+              <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-16">
                 {/* Siblings on the left */}
                 <div className="flex flex-wrap justify-center md:justify-end gap-6">
                   {parsedSiblings.map((sibling, idx) => (
@@ -265,11 +264,16 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
                   )}
                 </div>
 
-                {/* YOU in the center */}
-                <div className="flex flex-col items-center space-y-2">
-                  <FaUser className="text-red-500" size={48} />
-                  <span className="font-semibold text-red-500 text-center max-w-28 text-sm">{fullName}</span>
-                  <small className="text-xs text-red-400">(You)</small>
+                {/* YOU in the center - positioned below the yellow line */}
+                <div className="flex flex-col items-center">
+                  {/* Vertical connector from horizontal line to You icon */}
+                  <div className="h-16 w-1 bg-yellow-400 z-0 mb-2" />
+                  {/* You icon positioned below the line */}
+                  <div className="flex flex-col items-center space-y-2 mt-4">
+                    <FaUser className="text-red-500" size={48} />
+                    <span className="font-semibold text-red-500 text-center max-w-28 text-sm">{fullName}</span>
+                    <small className="text-xs text-red-400">(You)</small>
+                  </div>
                 </div>
 
                 {/* Spouse on the right */}

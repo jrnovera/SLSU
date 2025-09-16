@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import profileImg from '../assets/icons/user.png'; // Default profile image
 import { useLocation } from 'react-router-dom';
 import ProfileViewModal from './ProfileViewModal';
 import IPFormModal from './IPFormModal';
@@ -22,8 +23,12 @@ function useDebouncedValue(value, delay = 200) {
 const normalize = (v) => (v ?? '').toString().trim().toLowerCase();
 const hasHealthCondition = (health) => {
   const h = normalize(health);
-  if (!h) return false;
-  return !new Set(['healthy', 'none', 'no health condition', 'no condition', 'n/a', 'na', 'good']).has(h);
+  if (!h || h === 'n/a' || h === 'na' || h === 'none' || h === 'healthy' || 
+      h === 'no health condition' || h === 'no condition' || h === 'good' || 
+      h === '-' || h === 'normal') {
+    return false;
+  }
+  return true;
 };
 const isEmptyOccupation = (val) => {
   const s = normalize(val);
@@ -229,8 +234,10 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
   };
 
   const handleUpdate = (person) => {
-    setSelectedForAction(person);
-    setPersonToEdit(person);
+    // Make a deep copy of the person object to avoid reference issues
+    const personCopy = JSON.parse(JSON.stringify(person));
+    setSelectedForAction(personCopy);
+    setPersonToEdit(personCopy);
     setShowEditModal(true);
   };
 
@@ -254,7 +261,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
         createdAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, 'indigenous_people'), newPersonData);
+      const docRef = await addDoc(collection(db, 'indigenousPeople'), newPersonData);
       const newPerson = { id: docRef.id, ...newPersonData };
       
       // Update local data
@@ -279,18 +286,37 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     
     try {
       setIsProcessing(true);
+      
+      // Process family tree data (convert comma-separated strings to arrays)
+      const processedFamilyTree = { ...formData.familyTree };
+      if (typeof processedFamilyTree.siblings === 'string') {
+        processedFamilyTree.siblings = processedFamilyTree.siblings
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+      if (typeof processedFamilyTree.children === 'string') {
+        processedFamilyTree.children = processedFamilyTree.children
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+      
       const updateData = {
         ...formData,
+        familyTree: processedFamilyTree,
         updatedAt: serverTimestamp(),
       };
 
-      const personRef = doc(db, 'indigenous_people', personToEdit.id);
+      const personRef = doc(db, 'indigenousPeople', personToEdit.id);
       await updateDoc(personRef, updateData);
       
-      // Update local data
+      // Update local data with the processed data
+      const updatedPerson = { ...personToEdit, ...updateData };
       const updatedData = filteredData.map(p => 
-        p.id === personToEdit.id ? { ...p, ...updateData } : p
+        p.id === personToEdit.id ? updatedPerson : p
       );
+      
       setFilteredData(updatedData);
       setSelectedForAction(null);
       
@@ -312,7 +338,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     
     try {
       setIsProcessing(true);
-      const personRef = doc(db, 'indigenous_people', personToDelete.id);
+      const personRef = doc(db, 'indigenousPeople', personToDelete.id);
       await deleteDoc(personRef);
       
       // Update local data
@@ -364,23 +390,30 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           </button>
           
           {/* Filter Dropdown */}
-          <select
-            value={selectedFilter}
-            onChange={(e) => setSelectedFilter(e.target.value)}
-            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-200 sm:w-36"
-          >
-            <option value="Show All">All Filters</option>
-            <optgroup label="Gender">
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </optgroup>
-            <optgroup label="Status">
-              <option value="Student">Student</option>
-              <option value="Non-Student">Non-Student</option>
-              <option value="Unemployed">Unemployed</option>
-              <option value="PWD">PWD</option>
-            </optgroup>
-          </select>
+          <div className="relative sm:w-36 w-full">
+            <select
+              value={selectedFilter}
+              onChange={(e) => setSelectedFilter(e.target.value)}
+              className="w-full appearance-none rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="Show All">All Filters</option>
+              <optgroup label="Gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </optgroup>
+              <optgroup label="Status">
+                <option value="Student">Student</option>
+                <option value="Non-Student">Non-Student</option>
+                <option value="Unemployed">Unemployed</option>
+                <option value="PWD">PWD</option>
+              </optgroup>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
           <div className="relative flex-1 sm:w-72" ref={sugRef}>
             <input
               ref={inputRef}
@@ -415,15 +448,22 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
             )}
           </div>
 
-          <select
-            value={selectedBarangay}
-            onChange={(e) => setSelectedBarangay(e.target.value)}
-            className="w-full rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-200 sm:w-56"
-          >
-            {allBarangayOptions.map((barangay, index) => (
-              <option key={index} value={barangay}>{barangay}</option>
-            ))}
-          </select>
+          <div className="relative sm:w-56 w-full">
+            <select
+              value={selectedBarangay}
+              onChange={(e) => setSelectedBarangay(e.target.value)}
+              className="w-full appearance-none rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm outline-none focus:ring-2 focus:ring-slate-200"
+            >
+              {allBarangayOptions.map((barangay, index) => (
+                <option key={index} value={barangay}>{barangay}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <svg className="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </div>
 
           {(searchTerm || selectedBarangay !== 'All Barangay' || selectedFilter !== 'Show All') && (
             <button
@@ -440,11 +480,14 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           <table className="min-w-full border-collapse text-slate-900">
             <thead>
               <tr>
+                <th className={thCls}>Photo</th>
                 <th className={thCls}>Name</th>
                 <th className={thCls}>Birthdate</th>
                 <th className={thCls}>Age</th>
                 <th className={thCls}>Gender</th>
-                <th className={thCls}>Health Condition</th>
+                <th className={thCls}>Birthplace</th>
+                <th className={thCls}>Tribe</th>
+                <th className={thCls}>PWD</th>
                 <th className={thCls}>Barangay</th>
                 <th className={thCls} colSpan="3">Actions</th>
               </tr>
@@ -454,7 +497,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
               {loading ? (
                 [...Array(12)].map((_, i) => (
                   <tr key={`skeleton-${i}`} className="odd:bg-white even:bg-slate-50">
-                    {Array.from({ length: 6 }).map((__, j) => (
+                    {Array.from({ length: 9 }).map((__, j) => (
                       <td key={j} className={tdCls}>
                         <div className="h-3 w-full max-w-[160px] rounded bg-slate-200" />
                       </td>
@@ -474,6 +517,19 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                     className={`cursor-pointer ${selectedForAction?.id === person.id ? 'bg-blue-100 !important' : 'odd:bg-white even:bg-slate-50 hover:bg-slate-100'}`}
                     onClick={() => setSelectedForAction(person)}
                   >
+                    <td className={tdCls} style={{ width: '60px' }}>
+                      <div className="flex justify-center">
+                        <img 
+                          src={person.photoURL || person.image || profileImg} 
+                          alt="" 
+                          className="h-10 w-10 rounded-full object-cover border border-gray-200" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = profileImg;
+                          }}
+                        />
+                      </div>
+                    </td>
                     <td className={tdCls}>
                       <span className="font-medium">
                         {`${idx + 1}. ${person.lastName || ''}, ${person.firstName || ''}`}
@@ -482,7 +538,9 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                     <td className={tdCls}>{formatDOB(person.dateOfBirth)}</td>
                     <td className={tdCls}>{person.age ?? getAge(person) ?? 'N/A'}</td>
                     <td className={tdCls}>{person.gender || 'N/A'}</td>
-                    <td className={tdCls}>{person.healthCondition || 'None'}</td>
+                    <td className={tdCls}>{person.birthplace || person.address || 'N/A'}</td>
+                    <td className={tdCls}>{person.lineage || 'N/A'}</td>
+                    <td className={tdCls}>{hasHealthCondition(person.healthCondition) ? 'Yes' : 'No'}</td>
                     <td className={tdCls}>{person.barangay || 'N/A'}</td>
                     <td className={tdCls + " text-center"}>
                       <button
@@ -553,6 +611,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
         onClose={handleCloseForm}
         onSubmit={handleUpdateSubmit}
         initialData={personToEdit}
+        isEditing={true}
         isProcessing={isProcessing}
       />
       
@@ -568,7 +627,6 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
         isProcessing={isProcessing}
         personToDelete={personToDelete}
       />
-    
     </div>
   );
 }

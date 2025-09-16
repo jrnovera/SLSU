@@ -15,6 +15,68 @@ import {
   getDocs,
 } from 'firebase/firestore';
 
+// Dynamically import all barangay images as URLs (Vite)
+// This will create a map of path -> url for files in ../assets/images
+const imageModules = import.meta.glob('../assets/images/*.{jpg,jpeg,png,webp}', { eager: true, as: 'url' });
+
+// Build a more convenient map from just the base filename to the URL
+// e.g., 'barangay ajos.jpg' -> 'blob:/...'
+const imagesByFile = Object.fromEntries(
+  Object.entries(imageModules).map(([path, url]) => {
+    const file = path.split('/').pop();
+    return [file?.toLowerCase() ?? path.toLowerCase(), url];
+  })
+);
+
+// Helper to normalize strings for comparison
+const norm = (s = '') => s.toString().trim().toLowerCase()
+  .replace(/\s+/g, ' ')            // collapse whitespace
+  .replace(/[._-]+/g, ' ')          // unify separators
+  .replace(/\s{2,}/g, ' ')
+  .trim();
+
+// Some filenames differ slightly from barangay names; define aliases
+const nameAliases = {
+  // exact barangay name -> filename-friendly tail after 'barangay '
+  'san jose anyao': 'san jose',
+  'camandilison': 'camandiison',
+  'tagbacan silangan': 'tagcan silangan',
+};
+
+// Resolve an image URL for a given barangay name
+function getBarangayImage(name) {
+  const n = norm(name);
+  // Try direct patterns commonly used in the folder
+  const candidates = [];
+
+  // If it's of the form 'barangay X', the file seems to be 'barangay X.jpg'
+  if (n.startsWith('barangay ')) {
+    candidates.push(`${n}.jpg`);
+  } else {
+    candidates.push(`barangay ${n}.jpg`);
+  }
+
+  // Special alias mapping
+  if (nameAliases[n]) {
+    candidates.push(`barangay ${nameAliases[n]}.jpg`);
+  }
+
+  // Also try numeral-only barangays like 'barangay 1'
+  const numMatch = n.match(/^barangay\s*(\d+)$/);
+  if (numMatch) {
+    candidates.push(`barangay ${numMatch[1]}.jpg`);
+  }
+
+  // Return the first found
+  for (const c of candidates) {
+    const url = imagesByFile[c];
+    if (url) return url;
+  }
+
+  // No image found; fallback to camera icon
+  return cameraIcon;
+}
+
 export const allBarangays = [
   { id: 1, name: 'Ajos', population: 0 },
   { id: 2, name: 'Anusan', population: 0 },
@@ -179,7 +241,7 @@ function Brgylist({ onBarangaySelect = null }) {
             className="flex flex-col justify-between min-w-[180px] max-w-[180px] min-h-[290px] max-h-[290px] bg-white rounded-[20px] p-4 shadow-md"
           >
             <div className="w-full h-[180px] bg-[#E3E3E3] rounded-[18px] overflow-hidden mb-3">
-              <img src={cameraIcon} alt="camera" className="w-full h-full object-cover" />
+              <img src={getBarangayImage(barangay.name)} alt={barangay.name} className="w-full h-full object-cover" />
             </div>
 
             <div className="mb-2 min-h-[60px]">

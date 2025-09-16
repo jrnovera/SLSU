@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { FaSort, FaSortUp, FaSortDown, FaFilter } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaFilter, FaChevronDown } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import { allBarangays } from '../components/Brgylist';
@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import searchIcon from '../assets/icons/search.png';
+import profileImg from '../assets/icons/user.png'; // Import default profile image
 
 /* simple debounce */
 function useDebouncedValue(value, delay = 250) {
@@ -25,6 +26,17 @@ function useDebouncedValue(value, delay = 250) {
   return v;
 }
 
+/* Helper function to determine if a person has a health condition (PWD) */
+const hasHealthCondition = (health) => {
+  const h = (health || '').toString().trim().toLowerCase();
+  if (!h || h === 'n/a' || h === 'na' || h === 'none' || h === 'healthy' || 
+      h === 'no health condition' || h === 'no condition' || h === 'good' || 
+      h === '-' || h === 'normal') {
+    return false;
+  }
+  return true;
+};
+
 function SuperAdminDashboard() {
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +46,12 @@ function SuperAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedBarangay, setSelectedBarangay] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+  
+  // Filter states
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [selectedGender, setSelectedGender] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState(null);
+  const filterRef = useRef(null);
 
 
   // Profile modal
@@ -136,6 +154,31 @@ function SuperAdminDashboard() {
       });
     }
     
+    // Apply gender filter
+    if (selectedGender) {
+      filtered = filtered.filter(ip => ip.gender === selectedGender);
+    }
+    
+    // Apply status filter
+    if (selectedStatus) {
+      switch(selectedStatus) {
+        case 'Student':
+          filtered = filtered.filter(ip => ip.occupation === 'Student' || ip.status === 'Student');
+          break;
+        case 'Non-Student':
+          filtered = filtered.filter(ip => ip.occupation !== 'Student' && ip.status !== 'Student');
+          break;
+        case 'Unemployed':
+          filtered = filtered.filter(ip => ip.occupation === 'Unemployed' || ip.status === 'Unemployed');
+          break;
+        case 'PWD':
+          filtered = filtered.filter(ip => hasHealthCondition(ip.healthCondition));
+          break;
+        default:
+          break;
+      }
+    }
+    
     // Apply sorting
     if (sortConfig.key) {
       filtered = [...filtered].sort((a, b) => {
@@ -153,7 +196,7 @@ function SuperAdminDashboard() {
     }
     
     return filtered;
-  }, [ipList, searchTerm, sortConfig]);
+  }, [ipList, searchTerm, sortConfig, selectedGender, selectedStatus]);
 
   /* suggestions (names + barangays) */
   useEffect(() => {
@@ -218,12 +261,17 @@ function SuperAdminDashboard() {
     }
   };
 
-  // close suggestions when clicking outside
+  // close suggestions and filter dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e) {
-      if (!sugRef.current) return;
-      if (!sugRef.current.contains(e.target) && e.target !== inputRef.current) {
+      // Close suggestions dropdown
+      if (sugRef.current && !sugRef.current.contains(e.target) && e.target !== inputRef.current) {
         setShowSug(false);
+      }
+      
+      // Close filter dropdown
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setShowFilterDropdown(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -285,7 +333,120 @@ function SuperAdminDashboard() {
                   </option>
                 ))}
               </select>
-
+              
+              {/* Filter Dropdown */}
+              <div className="relative" ref={filterRef}>
+                <button 
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                  className="flex items-center justify-between px-4 py-2 border border-black text-sm rounded-sm focus:outline-none w-[150px] bg-black text-white"
+                >
+                  <span>
+                    {selectedGender || selectedStatus || "All Filters"}
+                  </span>
+                  <FaChevronDown className="ml-2" />
+                </button>
+                
+                {showFilterDropdown && (
+                  <div className="absolute z-10 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200">
+                    <div className="py-1">
+                      <button 
+                        onClick={() => {
+                          setSelectedGender(null);
+                          setSelectedStatus(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        All Filters
+                      </button>
+                    </div>
+                    
+                    {/* Gender Section */}
+                    <div className="py-1">
+                      <div className="px-4 py-1 text-sm font-medium text-gray-700">Gender</div>
+                      <button 
+                        onClick={() => {
+                          setSelectedGender('Male');
+                          setSelectedStatus(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        Male
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedGender('Female');
+                          setSelectedStatus(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        Female
+                      </button>
+                    </div>
+                    
+                    {/* Status Section */}
+                    <div className="py-1">
+                      <div className="px-4 py-1 text-sm font-medium text-gray-700">Status</div>
+                      <button 
+                        onClick={() => {
+                          setSelectedStatus('Student');
+                          setSelectedGender(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        Student
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedStatus('Non-Student');
+                          setSelectedGender(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        Non-Student
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedStatus('Unemployed');
+                          setSelectedGender(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        Unemployed
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setSelectedStatus('PWD');
+                          setSelectedGender(null);
+                          setShowFilterDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-black hover:bg-gray-100"
+                      >
+                        PWD
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Reset Filter Button */}
+              {(selectedGender || selectedStatus) && (
+                <button
+                  onClick={() => {
+                    setSelectedGender(null);
+                    setSelectedStatus(null);
+                    setShowFilterDropdown(false);
+                  }}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 transition-colors"
+                >
+                  Reset Filter
+                </button>
+              )}
             </div>
 
             {/* Right: Search with suggestions */}
@@ -341,11 +502,11 @@ function SuperAdminDashboard() {
           {/* Header */}
           <div className="px-6 py-4 border-b-2 border-[#c0c0c0] bg-[#f0f0f0]">
             <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
-            {hasSearch && (
-              <p className="mt-1 text-sm text-gray-500">
-                {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
-              </p>
-            )}
+            <p className="mt-1 text-sm text-gray-500">
+              {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
+              {selectedGender && <span className="ml-2">• Gender: {selectedGender}</span>}
+              {selectedStatus && <span className="ml-2">• Status: {selectedStatus}</span>}
+            </p>
           </div>
 
           {/* Results */}
@@ -366,12 +527,25 @@ function SuperAdminDashboard() {
                         # <FaFilter className="ml-1 text-gray-400" />
                       </div>
                     </th>
+                    <th className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center justify-center">
+                        Photo
+                      </div>
+                    </th>
                     <th 
                       onClick={() => requestSort('name')} 
                       className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
                     >
                       <div className="flex items-center">
                         Name {getSortIcon('name')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('gender')} 
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center">
+                        Gender {getSortIcon('gender')}
                       </div>
                     </th>
                     <th 
@@ -382,12 +556,25 @@ function SuperAdminDashboard() {
                         Barangay {getSortIcon('barangay')}
                       </div>
                     </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center">
+                        Birthplace
+                      </div>
+                    </th>
                     <th 
                       onClick={() => requestSort('lineage')} 
                       className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
                     >
                       <div className="flex items-center">
-                        Lineage {getSortIcon('lineage')}
+                        Tribe {getSortIcon('lineage')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('hasHealthCondition')} 
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center justify-center">
+                        PWD {getSortIcon('hasHealthCondition')}
                       </div>
                     </th>
                     <th className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
@@ -407,6 +594,19 @@ function SuperAdminDashboard() {
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
                         {index + 1}
                       </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        <div className="flex justify-center">
+                          <img 
+                            src={ip.photoURL || ip.image || profileImg} 
+                            alt="" 
+                            className="h-10 w-10 rounded-full object-cover border border-gray-200" 
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = profileImg;
+                            }}
+                          />
+                        </div>
+                      </td>
                       <td className="px-4 py-2 border-2 border-[#c0c0c0]">
                         <span 
                           onClick={() => handleViewProfile(ip)} 
@@ -416,10 +616,19 @@ function SuperAdminDashboard() {
                         </span>
                       </td>
                       <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {ip.gender || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
                         {ip.barangay || 'N/A'}
                       </td>
                       <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {ip.birthplace || ip.address || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
                         {ip.lineage || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        {hasHealthCondition(ip.healthCondition) ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
                         <div className="flex items-center justify-center gap-1.5">

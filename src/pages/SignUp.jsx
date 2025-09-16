@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { doc, setDoc } from 'firebase/firestore';
@@ -15,10 +15,63 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const { signup } = useAuth();
   const navigate = useNavigate();
+  
+  // Reset form fields on component mount
+  useEffect(() => {
+    // Clear all fields on mount
+    setEmail('');
+    setDisplayName('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('Chieftain');
+    
+    // Force reset any browser-saved values with a slight delay
+    const resetTimer = setTimeout(() => {
+      setEmail('');
+      setDisplayName('');
+      setPassword('');
+      setConfirmPassword('');
+      
+      // Try to reset any form elements directly
+      const emailInput = document.getElementById('email');
+      const nameInput = document.getElementById('displayName');
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('confirmPassword');
+      
+      if (emailInput) emailInput.value = '';
+      if (nameInput) nameInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+      if (confirmInput) confirmInput.value = '';
+    }, 100);
+    
+    return () => clearTimeout(resetTimer);
+  }, []);
 
+  // Function to clear form fields completely
+  const clearFormFields = () => {
+    setEmail('');
+    setDisplayName('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('Chieftain');
+    
+    // Try to reset any form elements directly
+    const emailInput = document.getElementById('email');
+    const nameInput = document.getElementById('displayName');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    
+    if (emailInput) emailInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+    if (confirmInput) confirmInput.value = '';
+  };
+  
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    
+    // We're not saving form data to ensure fields are empty after logout
 
     // Validate form
     if (password !== confirmPassword) {
@@ -38,6 +91,10 @@ function Signup() {
     try {
       // Create user with Firebase Authentication and set role
       const userCredential = await signup(email, password, displayName, role);
+      
+      // Clear password fields after successful signup
+      setPassword('');
+      setConfirmPassword('');
       
       // Redirect based on role
       if (role === 'IPMR') {
@@ -74,7 +131,16 @@ function Signup() {
         
         {error && <div className="error-message">{error}</div>}
         
-        <form onSubmit={handleSignup} className="signup-form">
+        {/* Hidden dummy form to trick browser autofill */}
+        <div style={{ display: 'none' }}>
+          <input type="text" name="email" />
+          <input type="text" name="displayName" />
+          <input type="password" name="password" />
+          <input type="password" name="confirmPassword" />
+          <select name="role"></select>
+        </div>
+        
+        <form onSubmit={handleSignup} className="signup-form" autoComplete="off" spellCheck="false" data-form-type="other">
           <div className="form-group">
             <label htmlFor="displayName">Full Name</label>
             <input
@@ -85,6 +151,10 @@ function Signup() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_displayName"
+              autoCorrect="off"
+              data-form-type="name"
             />
           </div>
           
@@ -98,6 +168,11 @@ function Signup() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_signup_email"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="email"
             />
           </div>
           
@@ -111,6 +186,11 @@ function Signup() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_signup_password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="password"
             />
             <small className="password-hint">Password must be at least 6 characters</small>
           </div>
@@ -125,6 +205,11 @@ function Signup() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_confirm_password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="password"
             />
           </div>
           
@@ -135,6 +220,9 @@ function Signup() {
               value={role}
               onChange={(e) => setRole(e.target.value)}
               className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_role"
+              data-form-type="other"
             >
               <option value="Chieftain">Chieftain</option>
               <option value="IPMR">IPMR</option>

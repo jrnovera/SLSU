@@ -392,10 +392,7 @@ function IPFormModal({
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
                     {/* Custom upload button + hidden file input */}
-                    <label htmlFor="ip-photo-input" className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer">
-                      Upload
-                      <input id="ip-photo-input" type="file" accept="image/*" onChange={handlePhotoChange} className="sr-only" />
-                    </label>
+                    
 
                     <button type="button" onClick={() => setShowCameraModal(true)} style={{ fontSize: 13, lineHeight: 1, borderRadius: "0.375rem" }} className="rounded-md bg-[#6998ab] px-3 font-medium text-white hover:bg-[#194d62] h-8">
                       Use Camera

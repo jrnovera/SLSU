@@ -20,6 +20,28 @@ const Navbar = () => {
     e.preventDefault();
     setError("");
     try {
+      // Clear all localStorage data
+      localStorage.clear();
+      
+      // Clear browser form data
+      const forms = document.querySelectorAll('form');
+      forms.forEach(form => form.reset());
+      
+      // Create a hidden form with the same field names as login/signup forms and reset it
+      // This tricks the browser into forgetting saved values
+      const resetForm = document.createElement('form');
+      resetForm.style.display = 'none';
+      resetForm.innerHTML = `
+        <input type="email" name="email" />
+        <input type="password" name="password" />
+        <input type="text" name="displayName" />
+        <input type="password" name="confirmPassword" />
+        <select name="role"></select>
+      `;
+      document.body.appendChild(resetForm);
+      resetForm.reset();
+      document.body.removeChild(resetForm);
+      
       await logout();
       setShowLogoutModal(false);
       navigate("/login");

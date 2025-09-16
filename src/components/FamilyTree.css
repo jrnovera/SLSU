@@ -50,6 +50,7 @@
   gap: 8px;
   min-width: 120px;
   border: 2px solid transparent;
+  position: relative; /* Add position relative for absolute positioning of children */
 }
 
 .family-member:hover {
@@ -66,20 +67,32 @@
 }
 
 .you-node.highlighted {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-  color: white;
-  border: 3px solid #ff9ff3;
-  transform: scale(1.05);
+  background: transparent;
+  color: black;
+  border: none;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  box-shadow: none;
+  margin-top: 40px; /* Push the entire you node down */
+  position: relative;
+  z-index: 2;
 }
 
 .spouse-node {
-  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
-  color: white;
+  background: white;
+  color: black;
+  z-index: 1; /* Make sure it appears above the line */
+  margin-top: -15px; /* Adjust position to align with horizontal line */
 }
 
 .sibling-node {
-  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
-  color: white;
+  background: white;
+  color: black;
+  z-index: 1; /* Make sure it appears above the line */
+  margin-top: -15px; /* Adjust position to align with horizontal line */
 }
 
 .child-node {
@@ -110,7 +123,11 @@
 .you-name {
   font-size: 15px;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: #ef4444;
+  margin-top: 5px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
 }
 
 .member-role {
@@ -134,7 +151,11 @@
 
 .you-icon {
   font-size: 26px;
+  color: #ef4444; /* Red color for the icon */
   animation: pulse 2s infinite;
+  margin-top: 0; /* Remove margin to let parent positioning control it */
+  z-index: 3; /* Make sure icon appears above the line */
+  position: relative;
 }
 
 @keyframes pulse {
@@ -153,6 +174,18 @@
   width: 4px;
   height: 32px;
   margin: 0 auto;
+}
+
+/* Horizontal line for siblings row */
+.siblings-row::before {
+  content: '';
+  position: absolute;
+  height: 3px;
+  background: #fbbf24; /* Yellow color for the line */
+  width: 100%;
+  top: 50%; /* Position the line at the center of the row */
+  left: 0;
+  z-index: 0;
 }
 
 .connection-line::before,
@@ -179,9 +212,11 @@
 .siblings-row {
   display: flex;
   gap: 20px;
-  align-items: center;
+  align-items: flex-start; /* Change to flex-start to allow different heights */
   flex-wrap: wrap;
   justify-content: center;
+  position: relative;
+  min-height: 120px; /* Ensure enough height for the yellow line and positioned elements */
 }
 
 .children-row {

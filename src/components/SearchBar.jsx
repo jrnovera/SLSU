@@ -67,8 +67,16 @@ function SearchBar() {
           endAt(term + '\uf8ff'),
           limit(SUGGESTION_LIMIT)
         );
+        // Add tribe/lineage search functionality
+        const qLineage = query(
+          peopleRef,
+          orderBy('lineage'),
+          startAt(term),
+          endAt(term + '\uf8ff'),
+          limit(SUGGESTION_LIMIT)
+        );
 
-        const queries = [getDocs(qFirst), getDocs(qLast), getDocs(qBrgy)];
+        const queries = [getDocs(qFirst), getDocs(qLast), getDocs(qBrgy), getDocs(qLineage)];
         if (isNumeric) {
           const qAge = query(peopleRef, where('age', '==', Number(term)), limit(SUGGESTION_LIMIT));
           queries.push(getDocs(qAge));
@@ -98,11 +106,13 @@ function SearchBar() {
             const fn = (p.firstName || '').toLowerCase();
             const ln = (p.lastName || '').toLowerCase();
             const br = (p.barangay || '').toLowerCase();
+            const lineage = (p.lineage || '').toLowerCase();
             const ageOk = isNumeric ? Number(p.age) === Number(term) : false;
             return (
               fn.startsWith(term) ||
               ln.startsWith(term) ||
               br.startsWith(term) ||
+              lineage.startsWith(term) ||
               ageOk
             );
           });
@@ -193,7 +203,7 @@ function SearchBar() {
         <input
           type="text"
           className="flex-1 outline-none bg-transparent text-sm placeholder-gray-400"
-          placeholder="Search name, barangay, or age…"
+          placeholder="Search name, tribe, barangay, or age…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={onKeyDown}
@@ -248,7 +258,7 @@ function SearchBar() {
                       {highlight(fullName || 'Unnamed')}
                     </div>
                     <div className="text-xs text-gray-500 truncate">
-                      Barangay: {highlight(person.barangay || '—')} · Age: {person.age ?? '—'}
+                      Tribe: {highlight(person.lineage || '—')} · Barangay: {highlight(person.barangay || '—')} · Age: {person.age ?? '—'}
                     </div>
                   </div>
                 </li>

@@ -9,8 +9,8 @@ const FamilyIcon = ({ type, className = "" }) => {
   const icons = {
     parent: "👨‍👩‍👧‍👦",
     person: "👤",
-    you: "🔴",
-    spouse: "💑",
+    you: "🔴", // Red circle for you
+    spouse: "👤",
     child: "👶"
   };
   return <span className={`family-icon ${className}`}>{icons[type] || icons.person}</span>;

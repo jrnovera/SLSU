@@ -52,6 +52,16 @@ export function AuthProvider({ children }) {
 
   // Logout function
   function logout() {
+    // Clear all stored form data
+    localStorage.clear(); // This will clear all localStorage items
+    
+    // If you need to keep some specific localStorage items, use this approach instead:
+    // localStorage.removeItem('loginFormData');
+    // localStorage.removeItem('signupFormData');
+    
+    // Clear browser's autofill data for login/signup forms
+    // We'll handle this in the components by setting autocomplete="off"
+    
     return signOut(auth);
   }
 
