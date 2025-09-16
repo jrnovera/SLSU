@@ -71,6 +71,12 @@ function IPFormModal({
   // camera modal
   const [showCameraModal, setShowCameraModal] = useState(false);
 
+  // Tribe suggestions state
+  const [tribeSuggestions, setTribeSuggestions] = useState([]);
+  const [showTribeSuggestions, setShowTribeSuggestions] = useState(false);
+  const tribeInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
   // submit guard
   const [isSaving, setIsSaving] = useState(false);
 
@@ -181,6 +187,43 @@ function IPFormModal({
     return () => {
       if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
     };
+  }, []);
+  
+  /* Handle tribe search and suggestions */
+  const handleTribeSearch = (e) => {
+    const searchTerm = e.target.value;
+    setFormData(prev => ({ ...prev, lineage: searchTerm }));
+    
+    if (searchTerm.trim() === '') {
+      setTribeSuggestions([]);
+      setShowTribeSuggestions(false);
+      return;
+    }
+    
+    const filteredSuggestions = LINEAGE_OPTIONS.filter(tribe => 
+      tribe.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    setTribeSuggestions(filteredSuggestions);
+    setShowTribeSuggestions(true);
+  };
+  
+  const handleSelectTribe = (tribe) => {
+    setFormData(prev => ({ ...prev, lineage: tribe }));
+    setShowTribeSuggestions(false);
+  };
+  
+  /* Close tribe suggestions when clicking outside */
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target) && 
+          tribeInputRef.current && !tribeInputRef.current.contains(e.target)) {
+        setShowTribeSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   /* handlers */
@@ -472,17 +515,35 @@ function IPFormModal({
           {/* Lineage */}
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Tribe:</label>
-            <select
-              name="lineage"
-              value={formData.lineage}
-              onChange={handleInputChange}
-              className="col-span-9 input-style"
-            >
-              <option value="">Select Tribe</option>
-              {LINEAGE_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            <div className="col-span-9 relative">
+              <input
+                ref={tribeInputRef}
+                type="text"
+                name="lineage"
+                value={formData.lineage}
+                onChange={handleTribeSearch}
+                onFocus={() => formData.lineage && setShowTribeSuggestions(true)}
+                placeholder="Search for tribe..."
+                className="w-full input-style"
+                autoComplete="off"
+              />
+              {showTribeSuggestions && tribeSuggestions.length > 0 && (
+                <div 
+                  ref={suggestionsRef}
+                  className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+                >
+                  {tribeSuggestions.map((tribe, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleSelectTribe(tribe)}
+                    >
+                      {tribe}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Barangay */}

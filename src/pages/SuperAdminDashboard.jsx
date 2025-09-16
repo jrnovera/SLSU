@@ -570,6 +570,30 @@ function SuperAdminDashboard() {
                       </div>
                     </th>
                     <th 
+                      onClick={() => requestSort('isStudent')} 
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center justify-center">
+                        STUDENT {getSortIcon('isStudent')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('isNonStudent')} 
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center justify-center">
+                        NON-STUDENT {getSortIcon('isNonStudent')}
+                      </div>
+                    </th>
+                    <th 
+                      onClick={() => requestSort('isUnemployed')} 
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                    >
+                      <div className="flex items-center justify-center">
+                        UNEMPLOYED {getSortIcon('isUnemployed')}
+                      </div>
+                    </th>
+                    <th 
                       onClick={() => requestSort('hasHealthCondition')} 
                       className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
                     >
@@ -626,6 +650,15 @@ function SuperAdminDashboard() {
                       </td>
                       <td className="px-4 py-2 border-2 border-[#c0c0c0]">
                         {ip.lineage || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        {ip.occupation === 'Student' || ip.status === 'Student' ? 'Yes' : 'No'}
+                      </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        {ip.occupation !== 'Student' && ip.status !== 'Student' && ip.occupation !== 'Unemployed' && ip.status !== 'Unemployed' ? 'Yes' : 'No'}
+                      </td>
+                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                        {ip.occupation === 'Unemployed' || ip.status === 'Unemployed' ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
                         {hasHealthCondition(ip.healthCondition) ? 'Yes' : 'No'}

@@ -365,9 +365,23 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
   // Excel-ish cell classes (thicker borders)
   const thCls = "px-3 py-2 text-[13px] font-semibold italic text-slate-700 bg-slate-100 border border-slate-500";
   const tdCls = "px-3 py-2 text-[13px] align-middle border border-slate-500";
+  
+  // Column width styles
+  const colWidths = {
+    photo: { width: '60px' },
+    name: { width: '180px' },
+    birthdate: { width: '100px' },
+    age: { width: '60px' },
+    gender: { width: '80px' },
+    birthplace: { width: '150px' },
+    tribe: { width: '120px' },
+    status: { width: '90px' },
+    barangay: { width: '120px' },
+    action: { width: '70px' },
+  };
 
   return (
-    <div className="mx-auto mt-28 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto mt-28 w-full max-w-[95%] px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -476,20 +490,23 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
 
       {/* Excel-like grid */}
       <div className="overflow-hidden rounded-xl border-2 border-slate-600 bg-gray-100/60 shadow-sm">
-        <div className="max-h-[70vh] overflow-auto">
-          <table className="min-w-full border-collapse text-slate-900">
+        <div className="max-h-[75vh] overflow-auto">
+          <table className="w-full table-fixed border-collapse text-slate-900" style={{ minWidth: '1500px' }}>
             <thead>
               <tr>
-                <th className={thCls}>Photo</th>
-                <th className={thCls}>Name</th>
-                <th className={thCls}>Birthdate</th>
-                <th className={thCls}>Age</th>
-                <th className={thCls}>Gender</th>
-                <th className={thCls}>Birthplace</th>
-                <th className={thCls}>Tribe</th>
-                <th className={thCls}>PWD</th>
-                <th className={thCls}>Barangay</th>
-                <th className={thCls} colSpan="3">Actions</th>
+                <th className={thCls} style={colWidths.photo}>Photo</th>
+                <th className={thCls} style={colWidths.name}>Name</th>
+                <th className={thCls} style={colWidths.birthdate}>Birthdate</th>
+                <th className={thCls} style={colWidths.age}>Age</th>
+                <th className={thCls} style={colWidths.gender}>Gender</th>
+                <th className={thCls} style={colWidths.birthplace}>Birthplace</th>
+                <th className={thCls} style={colWidths.tribe}>Tribe</th>
+                <th className={thCls} style={colWidths.status}>STUDENT</th>
+                <th className={thCls} style={colWidths.status}>NON-STUDENT</th>
+                <th className={thCls} style={colWidths.status}>UNEMPLOYED</th>
+                <th className={thCls} style={colWidths.status}>PWD</th>
+                <th className={thCls} style={colWidths.barangay}>Barangay</th>
+                <th className={thCls} style={colWidths.action} colSpan="3">Actions</th>
               </tr>
             </thead>
 
@@ -497,7 +514,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
               {loading ? (
                 [...Array(12)].map((_, i) => (
                   <tr key={`skeleton-${i}`} className="odd:bg-white even:bg-slate-50">
-                    {Array.from({ length: 9 }).map((__, j) => (
+                    {Array.from({ length: 12 }).map((__, j) => (
                       <td key={j} className={tdCls}>
                         <div className="h-3 w-full max-w-[160px] rounded bg-slate-200" />
                       </td>
@@ -517,7 +534,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                     className={`cursor-pointer ${selectedForAction?.id === person.id ? 'bg-blue-100 !important' : 'odd:bg-white even:bg-slate-50 hover:bg-slate-100'}`}
                     onClick={() => setSelectedForAction(person)}
                   >
-                    <td className={tdCls} style={{ width: '60px' }}>
+                    <td className={tdCls} style={colWidths.photo}>
                       <div className="flex justify-center">
                         <img 
                           src={person.photoURL || person.image || profileImg} 
@@ -530,19 +547,22 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                         />
                       </div>
                     </td>
-                    <td className={tdCls}>
+                    <td className={tdCls} style={colWidths.name}>
                       <span className="font-medium">
                         {`${idx + 1}. ${person.lastName || ''}, ${person.firstName || ''}`}
                       </span>
                     </td>
-                    <td className={tdCls}>{formatDOB(person.dateOfBirth)}</td>
-                    <td className={tdCls}>{person.age ?? getAge(person) ?? 'N/A'}</td>
-                    <td className={tdCls}>{person.gender || 'N/A'}</td>
-                    <td className={tdCls}>{person.birthplace || person.address || 'N/A'}</td>
-                    <td className={tdCls}>{person.lineage || 'N/A'}</td>
-                    <td className={tdCls}>{hasHealthCondition(person.healthCondition) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls}>{person.barangay || 'N/A'}</td>
-                    <td className={tdCls + " text-center"}>
+                    <td className={tdCls} style={colWidths.birthdate}>{formatDOB(person.dateOfBirth)}</td>
+                    <td className={tdCls} style={colWidths.age}>{person.age ?? getAge(person) ?? 'N/A'}</td>
+                    <td className={tdCls} style={colWidths.gender}>{person.gender || 'N/A'}</td>
+                    <td className={tdCls} style={colWidths.birthplace}>{person.birthplace || person.address || 'N/A'}</td>
+                    <td className={tdCls} style={colWidths.tribe}>{person.lineage || 'N/A'}</td>
+                    <td className={tdCls} style={colWidths.status}>{isStudentOccupation(person.occupation) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{!isStudentOccupation(person.occupation) && !isEmptyOccupation(person.occupation) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{isEmptyOccupation(person.occupation) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{hasHealthCondition(person.healthCondition) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.barangay}>{person.barangay || 'N/A'}</td>
+                    <td className={tdCls + " text-center"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -554,7 +574,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                         <FaEye />
                       </button>
                     </td>
-                    <td className={tdCls + " text-center"}>
+                    <td className={tdCls + " text-center"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -567,7 +587,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                         <FaEdit />
                       </button>
                     </td>
-                    <td className={tdCls + " text-center"}>
+                    <td className={tdCls + " text-center"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -584,7 +604,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className={`${tdCls} text-center py-10 bg-white`}>
+                  <td colSpan={12} className={`${tdCls} text-center py-10 bg-white`}>
                     No data found — try adjusting your search or filters.
                   </td>
                 </tr>
