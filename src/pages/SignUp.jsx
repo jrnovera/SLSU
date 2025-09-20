@@ -1,0 +1,290 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { RECAPTCHA_SITE_KEY } from '../config/recaptcha';
+import './SignUp.css';
+
+function Signup() {
+  const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState('Chieftain'); 
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const { signup } = useAuth();
+  const navigate = useNavigate();
+  const recaptchaRef = useRef(null);
+  
+  // Reset form fields on component mount
+  useEffect(() => {
+    // Clear all fields on mount
+    setEmail('');
+    setDisplayName('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('Chieftain');
+    
+    // Force reset any browser-saved values with a slight delay
+    const resetTimer = setTimeout(() => {
+      setEmail('');
+      setDisplayName('');
+      setPassword('');
+      setConfirmPassword('');
+      
+      // Try to reset any form elements directly
+      const emailInput = document.getElementById('email');
+      const nameInput = document.getElementById('displayName');
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('confirmPassword');
+      
+      if (emailInput) emailInput.value = '';
+      if (nameInput) nameInput.value = '';
+      if (passwordInput) passwordInput.value = '';
+      if (confirmInput) confirmInput.value = '';
+    }, 100);
+    
+    return () => clearTimeout(resetTimer);
+  }, []);
+
+  // Function to clear form fields completely
+  const clearFormFields = () => {
+    setEmail('');
+    setDisplayName('');
+    setPassword('');
+    setConfirmPassword('');
+    setRole('Chieftain');
+    setRecaptchaToken(null);
+    
+    // Reset reCAPTCHA
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
+    
+    // Try to reset any form elements directly
+    const emailInput = document.getElementById('email');
+    const nameInput = document.getElementById('displayName');
+    const passwordInput = document.getElementById('password');
+    const confirmInput = document.getElementById('confirmPassword');
+    
+    if (emailInput) emailInput.value = '';
+    if (nameInput) nameInput.value = '';
+    if (passwordInput) passwordInput.value = '';
+    if (confirmInput) confirmInput.value = '';
+  };
+
+  // Handle reCAPTCHA change
+  const handleRecaptchaChange = (token) => {
+    setRecaptchaToken(token);
+    if (!token) {
+      setError('');
+    }
+  };
+  
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    // We're not saving form data to ensure fields are empty after logout
+
+    // Validate form
+    if (password !== confirmPassword) {
+      return setError("Passwords do not match!");
+    }
+
+    if (password.length < 6) {
+      return setError("Password must be at least 6 characters long");
+    }
+
+    if (!displayName.trim()) {
+      return setError("Display name is required");
+    }
+
+    if (!recaptchaToken) {
+      return setError("Please complete the reCAPTCHA verification");
+    }
+
+    setLoading(true);
+
+    try {
+      // Create user with Firebase Authentication and set role
+      const userCredential = await signup(email, password, displayName, role);
+      
+      // Clear password fields and reCAPTCHA after successful signup
+      setPassword('');
+      setConfirmPassword('');
+      setRecaptchaToken(null);
+      if (recaptchaRef.current) {
+        recaptchaRef.current.reset();
+      }
+      
+      // Redirect based on role
+      if (role === 'IPMR') {
+        navigate('/admin');
+      } else if (role === 'Chieftain') {
+        navigate('/super-admin');
+      } else {
+        navigate('/home');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Email is already in use');
+      } else if (error.code === 'auth/invalid-email') {
+        setError('Invalid email address');
+      } else if (error.code === 'auth/weak-password') {
+        setError('Password is too weak');
+      } else {
+        setError('Failed to create an account. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  return (
+    <div className="signup-container">
+      <div className="signup-card">
+        <div className="signup-header">
+          <h1>Bantay Lahi</h1>
+          <h2>Create Account</h2>
+        </div>
+        
+        {error && <div className="error-message">{error}</div>}
+        
+        {/* Hidden dummy form to trick browser autofill */}
+        <div style={{ display: 'none' }}>
+          <input type="text" name="email" />
+          <input type="text" name="displayName" />
+          <input type="password" name="password" />
+          <input type="password" name="confirmPassword" />
+          <select name="role"></select>
+        </div>
+        
+        <form onSubmit={handleSignup} className="signup-form" autoComplete="off" spellCheck="false" data-form-type="other">
+          <div className="form-group">
+            <label htmlFor="displayName">Full Name</label>
+            <input
+              id="displayName"
+              type="text"
+              placeholder="Enter your full name"
+              required
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_displayName"
+              autoCorrect="off"
+              data-form-type="name"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_signup_email"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="email"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Create a password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_signup_password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="password"
+            />
+            <small className="password-hint">Password must be at least 6 characters</small>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_confirm_password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              data-form-type="password"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="role">User Role</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="form-input"
+              autoComplete="new-password"
+              name="bantay_lahi_role"
+              data-form-type="other"
+            >
+              <option value="Chieftain">Chieftain</option>
+              <option value="IPMR">IPMR</option>
+            </select>
+          </div>
+          
+          <div className="form-group recaptcha-container">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_SITE_KEY}
+              onChange={handleRecaptchaChange}
+              onExpired={() => setRecaptchaToken(null)}
+              onError={() => {
+                setRecaptchaToken(null);
+                setError('reCAPTCHA error occurred. Please try again.');
+              }}
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            className="signup-button" 
+            disabled={loading || !recaptchaToken}
+          >
+            {loading ? 'Creating Account...' : 'Sign Up'}
+          </button>
+        </form>
+        
+        <div className="signup-footer">
+          <p>
+            Already have an account? <Link to="/login" className="login-link">Login</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Signup;

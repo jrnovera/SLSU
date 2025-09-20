@@ -1,0 +1,176 @@
+/* FamilyTreeNew.css */
+.family-tree-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f5f7fa;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+  min-height: 400px;
+}
+
+/* Tribe Stats Panel */
+.tribe-stats-panel {
+  margin-bottom: 24px;
+}
+
+.tribe-stats-content {
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.tribe-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tribe-stats-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.tribe-stats-header span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tribe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tribe-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.tribe-count {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+/* Family Tree */
+.family-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+}
+
+.family-tree h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Levels */
+.parents-level, .middle-level, .children-level {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  width: 100%;
+  position: relative;
+}
+
+/* Connectors */
+.vertical-connector {
+  width: 3px;
+  height: 40px;
+  background-color: #fbbf24; /* Yellow color */
+  margin: 0 auto;
+}
+
+.horizontal-line {
+  position: absolute;
+  height: 3px;
+  background-color: #fbbf24; /* Yellow color */
+  width: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+/* Person styling */
+.person {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 2;
+  min-width: 80px;
+}
+
+.person-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.person-name {
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.person-role {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+}
+
+/* Special styling for You */
+.you {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin-top: 40px; /* Position below the horizontal line */
+}
+
+.you-icon {
+  font-size: 28px;
+  color: #ef4444;
+}
+
+.you-name {
+  color: #ef4444;
+  margin-top: 5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .family-tree-container {
+    padding: 16px;
+  }
+  
+  .parents-level, .middle-level, .children-level {
+    gap: 20px;
+  }
+  
+  .person {
+    min-width: 60px;
+    padding: 8px;
+  }
+}
