@@ -5,7 +5,6 @@ import {
   signOut, 
   onAuthStateChanged,
   updateProfile,
-  signInAnonymously,
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
@@ -82,26 +81,30 @@ export function AuthProvider({ children }) {
     }
   }
 
-  // Listen for auth state changes and ensure an authenticated session (anonymous if needed)
+  // Listen for auth state changes
   useEffect(() => {
     let unsub = () => {};
     (async () => {
       try {
         await setPersistence(auth, browserLocalPersistence);
-      } catch (_) {}
+      } catch (_) {
+        // Ignore persistence errors
+      }
 
       unsub = onAuthStateChanged(auth, async (user) => {
         try {
-          if (!user) {
-            // Ensure we are authenticated for rules that require request.auth
-            const anon = await signInAnonymously(auth);
-            user = anon.user;
+          if (user) {
+            // User is authenticated, get their role
+            const role = await getUserRole(user.uid);
+            setCurrentUser(user);
+            setUserRole(role);
+          } else {
+            // User is not authenticated
+            setCurrentUser(null);
+            setUserRole(null);
           }
-          const role = await getUserRole(user.uid);
-          setCurrentUser(user);
-          setUserRole(role);
         } catch (err) {
-          console.error('Auth init error:', err);
+          console.error('Auth state change error:', err);
           setCurrentUser(null);
           setUserRole(null);
         } finally {

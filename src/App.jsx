@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
 import Homepage from "./pages/Homepage";
 import TotalPopulation from "./pages/TotalPopulation";
 import Unauthorized from "./pages/Unauthorized";
@@ -20,6 +21,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
           {/* Root route - redirects based on user role */}

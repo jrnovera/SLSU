@@ -193,6 +193,9 @@ function Login() {
         
         <div className="login-footer">
           <p>
+            <Link to="/forgot-password" className="forgot-password-link">Forgot your password?</Link>
+          </p>
+          <p>
             Don't have an account? <Link to="/signup" className="signup-link">Sign up</Link>
           </p>
         </div>
