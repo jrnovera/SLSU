@@ -50,18 +50,63 @@
   color: #333;
 }
 
+/* Password input container */
+.password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .form-input {
   padding: 12px 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
   transition: border-color 0.3s;
+  width: 100%;
+}
+
+.password-input-container .form-input {
+  padding-right: 50px; /* Make room for the eye button */
 }
 
 .form-input:focus {
   border-color: #7FB3D5;
   outline: none;
   box-shadow: 0 0 0 2px rgba(127, 179, 213, 0.2);
+}
+
+/* Password toggle button */
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.3s, background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn:hover {
+  color: #7FB3D5;
+  background-color: rgba(127, 179, 213, 0.1);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(127, 179, 213, 0.3);
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .login-button {
