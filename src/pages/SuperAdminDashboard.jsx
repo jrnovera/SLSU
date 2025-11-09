@@ -37,6 +37,31 @@ const hasHealthCondition = (health) => {
   }
   return true;
 };
+const cleanParentField = (value) => {
+  if (value === undefined || value === null) return '';
+  const str = String(value).trim();
+  if (!str || ['n/a', 'na', '-', 'none'].includes(str.toLowerCase())) return '';
+  return str;
+};
+const getParentName = (ip = {}, type = 'father') => {
+  const value = cleanParentField(ip.familyTree?.[type] || ip[type]);
+  return value || 'N/A';
+};
+const getNameKey = (ip = {}) => {
+  const last = (ip.lastName || '').toString().toLowerCase();
+  const first = (ip.firstName || '').toString().toLowerCase();
+  const middle = (ip.middleName || '').toString().toLowerCase();
+  const combined = `${last} ${first} ${middle}`.trim();
+  return combined || (ip.name || '').toString().toLowerCase();
+};
+const sortIpsByName = (list = []) =>
+  [...list].sort((a, b) => {
+    const keyA = getNameKey(a);
+    const keyB = getNameKey(b);
+    if (keyA < keyB) return -1;
+    if (keyA > keyB) return 1;
+    return 0;
+  });
 
 const isStudentRecord = (ip = {}) =>
   ip.occupation === 'Student' || ip.status === 'Student';
@@ -97,7 +122,7 @@ function SuperAdminDashboard() {
         };
       });
 
-      setIpList(ipsList);
+      setIpList(sortIpsByName(ipsList));
     } catch (error) {
       console.error('Error fetching IPs:', error);
     } finally {
@@ -325,6 +350,8 @@ function SuperAdminDashboard() {
     { label: 'Barangay', value: (ip) => ip.barangay || 'N/A' },
     { label: 'Birthplace', value: (ip) => ip.birthplace || ip.address || 'N/A' },
     { label: 'Tribe', value: (ip) => ip.lineage || 'N/A' },
+    { label: 'Father', value: (ip) => getParentName(ip, 'father') },
+    { label: 'Mother', value: (ip) => getParentName(ip, 'mother') },
     { label: 'Student', value: (ip) => (isStudentRecord(ip) ? 'Yes' : 'No') },
     { label: 'Non-Student', value: (ip) => (isNonStudentRecord(ip) ? 'Yes' : 'No') },
     { label: 'Unemployed', value: (ip) => (isUnemployedRecord(ip) ? 'Yes' : 'No') },
@@ -615,6 +642,21 @@ function SuperAdminDashboard() {
                         Tribe {getSortIcon('lineage')}
                       </div>
                     </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center">
+                        Father
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center">
+                        Mother
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                      <div className="flex items-center">
+                        Father &amp; Mother
+                      </div>
+                    </th>
                     <th 
                       onClick={() => requestSort('isStudent')} 
                       className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
@@ -696,6 +738,15 @@ function SuperAdminDashboard() {
                       </td>
                       <td className="px-4 py-2 border-2 border-[#c0c0c0]">
                         {ip.lineage || 'N/A'}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {getParentName(ip, 'father')}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {getParentName(ip, 'mother')}
+                      </td>
+                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                        {getParentsLabel(ip)}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
                         {isStudentRecord(ip) ? 'Yes' : 'No'}

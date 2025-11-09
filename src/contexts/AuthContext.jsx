@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
@@ -12,6 +12,7 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
 const AuthContext = createContext();
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 export function useAuth() {
   return useContext(AuthContext);
@@ -21,6 +22,7 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const inactivityTimerRef = useRef(null);
 
   // Sign up function
   async function signup(email, password, displayName, role = 'user') {
@@ -115,6 +117,46 @@ export function AuthProvider({ children }) {
 
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+
+    const clearTimer = () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+        inactivityTimerRef.current = null;
+      }
+    };
+
+    const startTimer = () => {
+      clearTimer();
+      inactivityTimerRef.current = setTimeout(async () => {
+        try {
+          await logout();
+        } catch (err) {
+          console.error('Auto logout failed:', err);
+        }
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const handleActivity = () => {
+      if (currentUser) {
+        startTimer();
+      }
+    };
+
+    if (currentUser) {
+      activityEvents.forEach((event) => window.addEventListener(event, handleActivity));
+      startTimer();
+    } else {
+      clearTimer();
+    }
+
+    return () => {
+      activityEvents.forEach((event) => window.removeEventListener(event, handleActivity));
+      clearTimer();
+    };
+  }, [currentUser]);
 
   const value = {
     currentUser,

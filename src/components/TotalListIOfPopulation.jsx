@@ -93,8 +93,80 @@ const formatName = (person) => {
   if (!person) return 'N/A';
   const last = person.lastName || '';
   const firstMiddle = [person.firstName, person.middleName].filter(Boolean).join(' ').trim();
-  return [last, firstMiddle].filter(Boolean).join(', ') || 'N/A';
+  const formatted = [last, firstMiddle].filter(Boolean).join(', ');
+  return formatted || 'N/A';
 };
+const cleanField = (value) => {
+  if (value === undefined || value === null) return '';
+  const str = String(value).trim();
+  if (!str) return '';
+  if (['n/a', 'na', '-', 'none'].includes(str.toLowerCase())) return '';
+  return str;
+};
+const displayOrNA = (value) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : 'N/A';
+  }
+  return value ?? 'N/A';
+};
+const TABLE_SCROLL_HEIGHT = 'calc(100vh - 320px)';
+const resolveAgeLabel = (person) => {
+  const ageValue = person?.age;
+  if (typeof ageValue === 'number' && !Number.isNaN(ageValue)) return ageValue;
+  if (typeof ageValue === 'string' && ageValue.trim() !== '' && !Number.isNaN(Number(ageValue))) {
+    return Number(ageValue);
+  }
+  const derived = getAge(person);
+  return typeof derived === 'number' && !Number.isNaN(derived) ? derived : 'N/A';
+};
+const getStudentDisplay = (person) => {
+  if (typeof person?.isStudent === 'string' && person.isStudent.trim() !== '') {
+    if (person.isStudent === 'Student') return 'Yes';
+    if (person.isStudent === 'Not Student') return 'No';
+    return displayOrNA(person.isStudent);
+  }
+  if (!normalize(person?.occupation)) return 'N/A';
+  return isStudentOccupation(person.occupation, person) ? 'Yes' : 'No';
+};
+const getUnemployedDisplay = (person) => {
+  if (person?.isEmployed === true) return 'No';
+  if (person?.isEmployed === false) return 'Yes';
+  if (!normalize(person?.occupation)) return 'N/A';
+  return isUnemployed(person) ? 'Yes' : 'No';
+};
+const getHealthStatusDisplay = (person) => {
+  const raw = person?.healthCondition;
+  const hasRaw = raw !== undefined && raw !== null && `${raw}`.trim() !== '';
+  const hasCondition = hasHealthCondition(person);
+  if (!hasRaw && !hasCondition) return 'N/A';
+  return hasCondition ? 'Yes' : 'No';
+};
+const getParentName = (person, type = 'father') => {
+  if (!person) return 'N/A';
+  const value = cleanField(
+    person.familyTree?.[type] ||
+    person[type]
+  );
+  return value || 'N/A';
+};
+const getNameSortKey = (person) => {
+  if (!person) return '';
+  const last = (person.lastName || '').toString().toLowerCase();
+  const first = (person.firstName || '').toString().toLowerCase();
+  const middle = (person.middleName || '').toString().toLowerCase();
+  const nameKey = `${last} ${first} ${middle}`.trim();
+  return nameKey || (person.displayName || '').toString().toLowerCase();
+};
+const sortByName = (list) =>
+  [...list].sort((a, b) => {
+    const nameA = getNameSortKey(a);
+    const nameB = getNameSortKey(b);
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    return 0;
+  });
 
 function TotalListIOfPopulation({ populationData = [], category = null, onDataChange }) {
   const location = useLocation();
@@ -133,7 +205,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
 
   useEffect(() => { 
     setLoading(false); 
-    setFilteredData(populationData);
+    setFilteredData(sortByName(populationData));
   }, [populationData]);
 
   useEffect(() => {
@@ -202,6 +274,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     if (selectedBarangay !== 'All Barangay') {
       filtered = filtered.filter((p) => p.barangay === selectedBarangay);
     }
+    filtered = sortByName(filtered);
     setFilteredData(filtered);
   }, [searchTerm, selectedBarangay, selectedFilter, populationData, category]);
 
@@ -400,6 +473,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     gender: { width: '80px' },
     birthplace: { width: '150px' },
     tribe: { width: '120px' },
+    father: { width: '150px' },
+    mother: { width: '150px' },
     status: { width: '90px' },
     barangay: { width: '120px' },
     action: { width: '85px' },
@@ -421,6 +496,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
       value: (person) => person.birthplace || person.address || 'N/A',
     },
     { label: 'Tribe', value: (person) => person.lineage || 'N/A' },
+    { label: 'Father', value: (person) => getParentName(person, 'father') },
+    { label: 'Mother', value: (person) => getParentName(person, 'mother') },
     {
       label: 'Student',
       value: (person) => (isStudentOccupation(person.occupation, person) ? 'Yes' : 'No'),
@@ -578,9 +655,13 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
 
       {/* Excel-like grid */}
       <div className="overflow-hidden rounded-xl border-2 border-slate-600 bg-gray-100/60 shadow-sm">
-        <div className="max-h-[75vh] overflow-auto">
-          <table className="w-full table-fixed border-collapse text-slate-900" style={{ minWidth: '1500px' }}>
-            <thead>
+        <div className="overflow-x-auto">
+          <div
+            className="overflow-y-auto"
+            style={{ maxHeight: TABLE_SCROLL_HEIGHT }}
+          >
+            <table className="w-full table-fixed border-collapse text-slate-900" style={{ minWidth: '1500px' }}>
+              <thead className="sticky top-0 z-10 bg-[#e9ecef]">
               <tr>
                 <th className={thCls} style={colWidths.photo}>Photo</th>
                 <th className={thCls} style={colWidths.name}>Name</th>
@@ -589,6 +670,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                 <th className={thCls} style={colWidths.gender}>Gender</th>
                 <th className={thCls} style={colWidths.birthplace}>Birthplace</th>
                 <th className={thCls} style={colWidths.tribe}>Tribe</th>
+                <th className={thCls} style={colWidths.father}>Father</th>
+                <th className={thCls} style={colWidths.mother}>Mother</th>
                 <th className={thCls} style={colWidths.status}>STUDENT</th>
                 <th className={thCls} style={colWidths.status}>UNEMPLOYED</th>
                 <th className={thCls} style={colWidths.status}>PWD</th>
@@ -636,18 +719,20 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                     </td>
                     <td className={tdCls} style={colWidths.name}>
                       <span className="font-medium">
-                        {`${idx + 1}. ${person.lastName || ''}, ${person.firstName || ''}`}
+                        {`${idx + 1}. ${formatName(person)}`}
                       </span>
                     </td>
                     <td className={tdCls} style={colWidths.birthdate}>{formatDOB(person.dateOfBirth)}</td>
-                    <td className={tdCls} style={colWidths.age}>{person.age ?? getAge(person) ?? 'N/A'}</td>
-                    <td className={tdCls} style={colWidths.gender}>{person.gender || 'N/A'}</td>
-                    <td className={tdCls} style={colWidths.birthplace}>{person.birthplace || person.address || 'N/A'}</td>
-                    <td className={tdCls} style={colWidths.tribe}>{person.lineage || 'N/A'}</td>
-                    <td className={tdCls} style={colWidths.status}>{isStudentOccupation(person.occupation, person) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.status}>{isUnemployed(person) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.status}>{hasHealthCondition(person) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.barangay}>{person.barangay || 'N/A'}</td>
+                    <td className={tdCls} style={colWidths.age}>{resolveAgeLabel(person)}</td>
+                    <td className={tdCls} style={colWidths.gender}>{displayOrNA(person.gender)}</td>
+                    <td className={tdCls} style={colWidths.birthplace}>{displayOrNA(person.birthplace || person.address)}</td>
+                    <td className={tdCls} style={colWidths.tribe}>{displayOrNA(person.lineage)}</td>
+                    <td className={tdCls} style={colWidths.father}>{getParentName(person, 'father')}</td>
+                    <td className={tdCls} style={colWidths.mother}>{getParentName(person, 'mother')}</td>
+                    <td className={tdCls} style={colWidths.status}>{getStudentDisplay(person)}</td>
+                    <td className={tdCls} style={colWidths.status}>{getUnemployedDisplay(person)}</td>
+                    <td className={tdCls} style={colWidths.status}>{getHealthStatusDisplay(person)}</td>
+                    <td className={tdCls} style={colWidths.barangay}>{displayOrNA(person.barangay)}</td>
                     <td className={tdCls + " text-center px-4"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
@@ -699,6 +784,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           </table>
         </div>
       </div>
+    </div>
 
       {/* Modals */}
       <ProfileViewModal isOpen={modalIsOpen} onClose={closeModal} person={selectedPerson} />
