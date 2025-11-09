@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Modal from 'react-modal';
 import { FaUser } from 'react-icons/fa';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config';
 import profileImg from '../assets/icons/user.png'; // ✅ default avatar
 
 function formatDOB(dateOfBirth) {
@@ -28,88 +26,92 @@ const toArray = (val) => {
   return [];
 };
 
+const InfoSection = ({ title, rows = [] }) => (
+  <div className="rounded-lg border border-gray-200 bg-white/70 p-4">
+    <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">
+      {title}
+    </h3>
+    <dl className="space-y-1 text-sm text-gray-700">
+      {rows.map(({ label, value }) => (
+        <div key={label} className="flex justify-between gap-3">
+          <dt className="font-semibold text-gray-600">{label}</dt>
+          <dd className="text-right text-gray-900 flex-1">{value ?? 'N/A'}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+);
+
 const ProfileViewModal = ({ isOpen, onClose, person }) => {
-  const [tribeStats, setTribeStats] = useState([]);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [statsError, setStatsError] = useState('');
-
-  // Fetch tribe statistics when modal opens
-  useEffect(() => {
-    if (!isOpen) return;
-    
-    let cancelled = false;
-    const fetchTribeStats = async () => {
-      setStatsLoading(true);
-      setStatsError('');
-      try {
-        const snap = await getDocs(collection(db, 'indigenousPeople'));
-        const counts = {};
-        let total = 0;
-        
-        snap.forEach((doc) => {
-          const data = doc.data() || {};
-          let lineage = (data.lineage || '').toString().trim();
-          if (!lineage) lineage = 'Unknown';
-          counts[lineage] = (counts[lineage] || 0) + 1;
-          total += 1;
-        });
-        
-        // Convert to array with percentages, sorted by count
-        const statsArray = Object.entries(counts)
-          .map(([name, count]) => ({
-            name,
-            count,
-            percentage: total > 0 ? ((count / total) * 100).toFixed(1) : '0.0'
-          }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 6); // Show top 6 tribes
-        
-        if (!cancelled) {
-          setTribeStats(statsArray);
-        }
-      } catch (error) {
-        console.error('Failed to fetch tribe statistics:', error);
-        if (!cancelled) {
-          setStatsError('Failed to load statistics');
-        }
-      } finally {
-        if (!cancelled) {
-          setStatsLoading(false);
-        }
-      }
-    };
-    
-    fetchTribeStats();
-    return () => { cancelled = true; };
-  }, [isOpen]);
-
   if (!isOpen || !person) return null;
 
   const {
     firstName,
     lastName,
+    middleName,
     dateOfBirth,
     age,
     gender,
     barangay,
+    address,
+    municipality,
+    province,
     occupation,
     healthCondition,
+    healthConditionDetails,
     householdMembers,
     civilStatus,
+    isStudent,
+    educationLevel,
+    schoolName,
+    isEmployed,
+    contactNumber,
     familyTree = {},
     photoURL,
     image, // legacy field fallback
   } = person;
 
-  const fullName = `${firstName || ''} ${lastName || ''}`.trim() || 'N/A';
+  const fullName = `${firstName || ''} ${middleName || ''} ${lastName || ''}`.replace(/\s+/g, ' ').trim() || 'N/A';
   const avatarSrc = photoURL || image || profileImg; // ✅ choose best available
+  const studentStatus =
+    isStudent === 'Student' ? 'Student'
+    : isStudent === 'Not Student' ? 'Not Student'
+    : isStudent || 'N/A';
 
-  // Accept nested familyTree OR flat fields if you ever move them to root
+  const employmentStatus =
+    typeof isEmployed === 'boolean'
+      ? (isEmployed ? 'Employed' : 'Unemployed')
+      : 'N/A';
+
+  const occupationLabel =
+    person?.isEmployed === true
+      ? (occupation || 'N/A')
+      : person?.isEmployed === false
+        ? 'Unemployed'
+        : (occupation && occupation.trim() &&
+          !['n/a', 'na', 'none', '-', 'wala'].includes(occupation.toLowerCase()))
+          ? occupation
+          : 'Unemployed';
+
+  const healthSummary =
+    healthCondition === 'Not Healthy'
+      ? (healthConditionDetails || 'Not Healthy')
+      : (healthCondition || 'N/A');
+
   const father = familyTree.father || person.father || 'N/A';
   const mother = familyTree.mother || person.mother || 'N/A';
   const spouse = familyTree.spouse || person.spouse || 'N/A';
-  const parsedSiblings = toArray(familyTree.siblings || person.siblings);
-  const parsedChildren = toArray(familyTree.children || person.children);
+  const siblings = toArray(familyTree.siblings || person.siblings);
+  const children = toArray(familyTree.children || person.children);
+  const contactLabel = contactNumber || 'N/A';
+  const addressLabel = address || 'N/A';
+
+  // Family Tree variables - COMMENTED OUT FOR NOW
+  // const father = familyTree.father || person.father || 'N/A';
+  // const mother = familyTree.mother || person.mother || 'N/A';
+  // const spouse = familyTree.spouse || person.spouse || 'N/A';
+  // const parsedSiblings = toArray(familyTree.siblings || person.siblings);
+  // const parsedChildren = toArray(familyTree.children || person.children);
 
   return (
     <Modal
@@ -129,11 +131,10 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
         &times;
       </button>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Column 1: Profile Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="flex flex-col items-center text-center space-y-3 mb-4">
-            {/* ✅ Avatar with graceful fallback to user.png */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Detailed Profile */}
+        <div className="bg-gray-50 rounded-lg p-4 lg:col-span-2 space-y-4">
+          <div className="flex flex-col items-center text-center space-y-3">
             <div className="h-24 w-24 rounded-full overflow-hidden ring-2 ring-gray-200 bg-gray-100 flex items-center justify-center">
               {avatarSrc ? (
                 <img
@@ -149,160 +150,119 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
                 <FaUser className="text-gray-500" size={48} />
               )}
             </div>
-            <h2 className="text-xl font-semibold">{fullName}</h2>
+            <div>
+              <p className="text-sm uppercase tracking-wide text-gray-500">Full Name</p>
+              <h2 className="text-2xl font-semibold text-gray-900">{fullName}</h2>
+            </div>
           </div>
 
-          <div className="space-y-1 text-sm text-gray-700">
-            <p><span className="font-semibold">Date of Birth:</span> {formatDOB(dateOfBirth)}</p>
-            <p><span className="font-semibold">Gender:</span> {gender || 'N/A'}</p>
-            <p><span className="font-semibold">Age:</span> {age ?? 'N/A'}</p>
-            <p><span className="font-semibold">Civil Status:</span> {civilStatus || 'N/A'}</p>
-            <p><span className="font-semibold">Barangay:</span> {barangay || 'N/A'}</p>
-            <p><span className="font-semibold">Occupation:</span> {occupation || 'N/A'}</p>
-            <p><span className="font-semibold">Health Condition:</span> {healthCondition || 'N/A'}</p>
-            <p><span className="font-semibold">Household Members:</span> {householdMembers || 'N/A'}</p>
+          <div className="space-y-4">
+            <InfoSection
+              title="Personal Details"
+              rows={[
+                { label: 'Date of Birth', value: formatDOB(dateOfBirth) },
+                { label: 'Age', value: age ?? 'N/A' },
+                { label: 'Gender', value: gender || 'N/A' },
+                { label: 'Civil Status', value: civilStatus || 'N/A' },
+              ]}
+            />
+
+            <InfoSection
+              title="Address & Contact"
+              rows={[
+                { label: 'Barangay', value: barangay || 'N/A' },
+                { label: 'Street / Sitio', value: addressLabel },
+                { label: 'Municipality', value: municipality || 'N/A' },
+                { label: 'Province', value: province || 'N/A' },
+                { label: 'Contact No.', value: contactLabel },
+              ]}
+            />
+
+            <InfoSection
+              title="Education & Work"
+              rows={[
+                { label: 'Student Status', value: studentStatus },
+                { label: 'Education Level', value: educationLevel || 'N/A' },
+                { label: 'School Name', value: schoolName || 'N/A' },
+                { label: 'Employment Status', value: employmentStatus },
+                { label: 'Occupation', value: occupationLabel },
+              ]}
+            />
+
+            <InfoSection
+              title="Health & Household"
+              rows={[
+                { label: 'Health Condition', value: healthSummary },
+                {
+                  label: 'Health Details',
+                  value:
+                    healthCondition === 'Not Healthy'
+                      ? (healthConditionDetails || 'Not provided')
+                      : (healthConditionDetails || 'N/A'),
+                },
+                { label: 'Household Members', value: householdMembers || 'N/A' },
+              ]}
+            />
           </div>
         </div>
 
-        {/* Column 2: Tribe Statistics */}
-        <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center shadow-sm">
+        {/* Tribe card */}
+        <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center shadow-sm lg:col-span-1">
           <h2 className="text-lg font-semibold text-center text-gray-800 border-b border-gray-200 pb-3 w-full">
-            Tribe Distribution
+            Tribe
           </h2>
 
-          {statsLoading ? (
-            <div className="flex items-center justify-center mt-6">
-              <p className="text-sm text-gray-500">Loading statistics...</p>
+          <div className="flex flex-col items-center justify-center mt-8 space-y-4">
+            <div className="w-32 h-32">
+              <CircularProgressbar
+                value={100}
+                text="100%"
+                styles={{
+                  path: { stroke: '#f59e0b' },
+                  trail: { stroke: '#e5e7eb' },
+                  text: { fill: '#1f2937', fontSize: '16px', fontWeight: 600 },
+                }}
+              />
             </div>
-          ) : statsError ? (
-            <div className="flex items-center justify-center mt-6">
-              <p className="text-sm text-red-500">{statsError}</p>
-            </div>
-          ) : tribeStats.length === 0 ? (
-            <div className="flex items-center justify-center mt-6">
-              <p className="text-sm text-gray-500">No data available</p>
-            </div>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-6 mt-6">
-              {tribeStats.map((tribe, index) => {
-                // Color palette for different tribes
-                const colors = [
-                  '#f59e0b', // amber
-                  '#3b82f6', // blue
-                  '#10b981', // emerald
-                  '#ef4444', // red
-                  '#8b5cf6', // violet
-                  '#f97316', // orange
-                ];
-                const color = colors[index % colors.length];
-                
-                return (
-                  <div key={tribe.name} className="flex flex-col items-center space-y-2">
-                    <div className="w-20 h-20">
-                      <CircularProgressbar
-                        value={parseFloat(tribe.percentage)}
-                        text={`${tribe.percentage}%`}
-                        styles={{
-                          path: { stroke: color },
-                          trail: { stroke: '#e5e7eb' },
-                          text: { fill: '#1f2937', fontSize: '14px', fontWeight: 600 },
-                        }}
-                      />
-                    </div>
-                    <p className="text-xs font-medium text-gray-600 text-center max-w-20 truncate" title={tribe.name}>
-                      {tribe.name}
-                    </p>
-                    <p className="text-xs text-gray-500">({tribe.count})</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Column 3: Family Tree */}
-        <div className="bg-white rounded-lg p-8 w-full max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Family Tree</h2>
-
-          <div className="flex flex-col items-center space-y-16">
-            {/* Parents */}
-            <div className="relative flex flex-col items-center w-full pb-8">
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 w-40 h-1 bg-yellow-400 z-0" />
-              <div className="absolute top-12 left-1/2 -translate-x-1/2 w-1 h-14 bg-yellow-400 z-0" />
-
-              <div className="flex justify-center gap-16 md:gap-24 relative z-10">
-                <div className="flex flex-col items-center space-y-2">
-                  <FaUser className="text-gray-700" size={50} />
-                  <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{father}</span>
-                  <small className="text-xs text-gray-500">(Father)</small>
-                </div>
-                <div className="flex flex-col items-center space-y-2">
-                  <FaUser className="text-gray-700" size={50} />
-                  <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{mother}</span>
-                  <small className="text-xs text-gray-500">(Mother)</small>
-                </div>
-              </div>
-            </div>
-
-            {/* Middle Level: Siblings + You + Spouse */}
-            <div className="relative w-full">
-              {/* connecting bar behind */}
-              <div className="absolute top-10 left-0 right-0 h-1 bg-yellow-400 z-0" />
-
-              <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 items-start gap-8 md:gap-16">
-                {/* Siblings on the left */}
-                <div className="flex flex-wrap justify-center md:justify-end gap-6">
-                  {parsedSiblings.map((sibling, idx) => (
-                    <div key={`sibling-${idx}`} className="flex flex-col items-center space-y-2 min-w-[96px]">
-                      <FaUser className="text-gray-700" size={45} />
-                      <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{sibling}</span>
-                      <small className="text-xs text-gray-500">(Sibling)</small>
-                    </div>
-                  ))}
-                  {parsedSiblings.length === 0 && (
-                    <div className="text-xs text-gray-400 md:text-right">No siblings</div>
-                  )}
-                </div>
-
-                {/* YOU in the center - positioned below the yellow line */}
-                <div className="flex flex-col items-center">
-                  {/* Vertical connector from horizontal line to You icon */}
-                  <div className="h-16 w-1 bg-yellow-400 z-0 mb-2" />
-                  {/* You icon positioned below the line */}
-                  <div className="flex flex-col items-center space-y-2 mt-4">
-                    <FaUser className="text-red-500" size={48} />
-                    <span className="font-semibold text-red-500 text-center max-w-28 text-sm">{fullName}</span>
-                    <small className="text-xs text-red-400">(You)</small>
-                  </div>
-                </div>
-
-                {/* Spouse on the right */}
-                <div className="flex flex-col items-center md:items-start space-y-2">
-                  <FaUser className="text-gray-700" size={45} />
-                  <span className="font-semibold text-gray-800 text-center md:text-left max-w-28 text-sm">{spouse}</span>
-                  <small className="text-xs text-gray-500">(Spouse)</small>
-                </div>
-              </div>
-            </div>
-
-            {/* Children */}
-            <div className="relative w-full mt-6">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 h-4 w-1 bg-yellow-400 z-0" />
-              <div className="relative z-10 flex justify-center gap-8 flex-wrap mt-2">
-                {parsedChildren.map((child, idx) => (
-                  <div key={`child-${idx}`} className="flex flex-col items-center space-y-2 min-w-[88px]">
-                    <FaUser className="text-gray-700" size={40} />
-                    <span className="font-semibold text-gray-800 text-center max-w-24 text-sm">{child}</span>
-                    <small className="text-xs text-gray-500">(Child)</small>
-                  </div>
-                ))}
-                {parsedChildren.length === 0 && (
-                  <div className="text-xs text-gray-400">No children</div>
-                )}
-              </div>
-            </div>
+            <p className="text-lg font-semibold text-gray-800 text-center">
+              {person?.lineage || 'Unknown'}
+            </p>
           </div>
         </div>
+
+        {/* Family details */}
+        {/* <div className="bg-gray-50 rounded-lg p-6 space-y-4 lg:col-span-1">
+          <h2 className="text-lg font-semibold text-gray-800">Family Members</h2>
+          <div className="space-y-3 text-sm text-gray-700">
+            <p><span className="font-semibold text-gray-600">Father:</span> {father || 'N/A'}</p>
+            <p><span className="font-semibold text-gray-600">Mother:</span> {mother || 'N/A'}</p>
+            <p><span className="font-semibold text-gray-600">Spouse:</span> {spouse || 'N/A'}</p>
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Siblings</h3>
+            {siblings.length ? (
+              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                {siblings.map((s, idx) => (
+                  <li key={`sibling-${idx}`}>{s}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-400">No siblings recorded.</p>
+            )}
+          </div>
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Children</h3>
+            {children.length ? (
+              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
+                {children.map((c, idx) => (
+                  <li key={`child-${idx}`}>{c}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-400">No children recorded.</p>
+            )}
+          </div>
+        </div> */}
       </div>
     </Modal>
   );

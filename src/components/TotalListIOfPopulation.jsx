@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import profileImg from '../assets/icons/user.png'; // Default profile image
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ProfileViewModal from './ProfileViewModal';
 import IPFormModal from './IPFormModal';
 import ConfirmationModal from './ConfirmationModal';
 import { allBarangays } from './Brgylist';
 import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { FaEdit, FaTrash, FaEye, FaPlus } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaEye, FaPlus, FaArrowLeft, FaDownload } from 'react-icons/fa';
+import exportToXlsx from '../utils/exportToXlsx';
 
 /* small debounce hook */
 function useDebouncedValue(value, delay = 200) {
@@ -21,21 +22,42 @@ function useDebouncedValue(value, delay = 200) {
 
 /* ---------- helpers ---------- */
 const normalize = (v) => (v ?? '').toString().trim().toLowerCase();
-const hasHealthCondition = (health) => {
+const hasHealthCondition = (person) => {
+  const health = person?.healthCondition;
+
+  // Check if using new format (Healthy/Not Healthy)
+  if (health === "Healthy") return false;
+  if (health === "Not Healthy") return true;
+
+  // Fallback to legacy healthCondition text values
   const h = normalize(health);
-  if (!h || h === 'n/a' || h === 'na' || h === 'none' || h === 'healthy' || 
-      h === 'no health condition' || h === 'no condition' || h === 'good' || 
+  if (!h || h === 'n/a' || h === 'na' || h === 'none' || h === 'healthy' ||
+      h === 'no health condition' || h === 'no condition' || h === 'good' ||
       h === '-' || h === 'normal') {
     return false;
   }
   return true;
 };
-const isEmptyOccupation = (val) => {
+const isUnemployed = (person) => {
+  // Check new isEmployed field first
+  if (person && person.isEmployed !== undefined && person.isEmployed !== null && person.isEmployed !== "") {
+    return person.isEmployed === false;
+  }
+
+  // Fallback to legacy occupation-based check
+  const val = person?.occupation;
   const s = normalize(val);
   if (!s) return true;
   return ['none', 'n/a', 'na', '-', 'wala'].includes(s);
 };
-const isStudentOccupation = (val) => {
+// Check if person is a student based on isStudent field (new) or occupation (legacy)
+const isStudentOccupation = (val, person = null) => {
+  // Prioritize the new isStudent field if person object is provided
+  if (person && person.isStudent !== undefined && person.isStudent !== "") {
+    return person.isStudent === "Student";
+  }
+
+  // Fallback to occupation-based check for legacy data
   if (!val) return false;
   const s = normalize(val);
   const keys = [
@@ -67,10 +89,17 @@ const formatDOB = (val) => {
   const yy = d.getFullYear();
   return `${mm}/${dd}/${yy}`;
 };
+const formatName = (person) => {
+  if (!person) return 'N/A';
+  const last = person.lastName || '';
+  const firstMiddle = [person.firstName, person.middleName].filter(Boolean).join(' ').trim();
+  return [last, firstMiddle].filter(Boolean).join(', ') || 'N/A';
+};
 
 function TotalListIOfPopulation({ populationData = [], category = null, onDataChange }) {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedTerm = useDebouncedValue(searchTerm, 220);
 
@@ -134,15 +163,15 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     if (category) {
       if (category === 'male') filtered = filtered.filter((p) => p.gender === 'Male');
       else if (category === 'female') filtered = filtered.filter((p) => p.gender === 'Female');
-      else if (category === 'students' || category === 'student') filtered = filtered.filter((p) => isStudentOccupation(p.occupation));
+      else if (category === 'students' || category === 'student') filtered = filtered.filter((p) => isStudentOccupation(p.occupation, p));
       else if (category === 'not_attending_25_below') {
         filtered = filtered.filter((p) => {
           const age = getAge(p);
-          return age !== null && age <= 25 && !isStudentOccupation(p.occupation);
+          return age !== null && age <= 25 && p.isStudent === "Not Student";
         });
-      } else if (category === 'unemployed') filtered = filtered.filter((p) => isEmptyOccupation(p.occupation));
-      else if (category === 'with_health') filtered = filtered.filter((p) => hasHealthCondition(p.healthCondition));
-      else if (category === 'no_health') filtered = filtered.filter((p) => !hasHealthCondition(p.healthCondition));
+      } else if (category === 'unemployed') filtered = filtered.filter((p) => isUnemployed(p));
+      else if (category === 'with_health') filtered = filtered.filter((p) => hasHealthCondition(p));
+      else if (category === 'no_health') filtered = filtered.filter((p) => !hasHealthCondition(p));
     }
 
     const term = searchTerm.trim().toLowerCase();
@@ -160,13 +189,13 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
       if (selectedFilter === 'Male' || selectedFilter === 'Female') {
         filtered = filtered.filter((p) => p.gender === selectedFilter);
       } else if (selectedFilter === 'Student') {
-        filtered = filtered.filter((p) => isStudentOccupation(p.occupation));
+        filtered = filtered.filter((p) => isStudentOccupation(p.occupation, p));
       } else if (selectedFilter === 'Non-Student') {
-        filtered = filtered.filter((p) => !isStudentOccupation(p.occupation) && !isEmptyOccupation(p.occupation));
+        filtered = filtered.filter((p) => !isStudentOccupation(p.occupation, p) && !isUnemployed(p));
       } else if (selectedFilter === 'Unemployed') {
-        filtered = filtered.filter((p) => isEmptyOccupation(p.occupation));
+        filtered = filtered.filter((p) => isUnemployed(p));
       } else if (selectedFilter === 'PWD') {
-        filtered = filtered.filter((p) => hasHealthCondition(p.healthCondition));
+        filtered = filtered.filter((p) => hasHealthCondition(p));
       }
     }
 
@@ -373,11 +402,66 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     tribe: { width: '120px' },
     status: { width: '90px' },
     barangay: { width: '120px' },
-    action: { width: '70px' },
+    action: { width: '85px' },
+  };
+  const exportColumns = useMemo(() => ([
+    { label: '#', value: (_person, index) => index + 1 },
+    { label: 'Name', value: (person) => formatName(person) },
+    {
+      label: 'Birthdate',
+      value: (person) => formatDOB(person.dateOfBirth || person.birthDate),
+    },
+    {
+      label: 'Age',
+      value: (person) => person.age ?? getAge(person) ?? 'N/A',
+    },
+    { label: 'Gender', value: (person) => person.gender || 'N/A' },
+    {
+      label: 'Birthplace',
+      value: (person) => person.birthplace || person.address || 'N/A',
+    },
+    { label: 'Tribe', value: (person) => person.lineage || 'N/A' },
+    {
+      label: 'Student',
+      value: (person) => (isStudentOccupation(person.occupation, person) ? 'Yes' : 'No'),
+    },
+    {
+      label: 'Unemployed',
+      value: (person) => (isUnemployed(person) ? 'Yes' : 'No'),
+    },
+    {
+      label: 'PWD',
+      value: (person) => (hasHealthCondition(person) ? 'Yes' : 'No'),
+    },
+    { label: 'Barangay', value: (person) => person.barangay || 'N/A' },
+    {
+      label: 'Contact',
+      value: (person) => person.contactNumber || person.phoneNumber || person.mobile || 'N/A',
+    },
+  ]), []);
+
+  const handleExport = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const safeTitle = pageTitle.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+    exportToXlsx({
+      data: filteredData,
+      columns: exportColumns,
+      filename: `${safeTitle || 'population'}_${today}.xlsx`,
+      sheetName: safeTitle?.substring(0, 31) || 'Population',
+    });
   };
 
   return (
     <div className="mx-auto mt-28 w-full max-w-[95%] px-4 sm:px-6 lg:px-8">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="mb-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+      >
+        <FaArrowLeft className="text-sm" />
+        Back
+      </button>
+
       {/* Header */}
       <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -397,6 +481,14 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           >
             <FaPlus size={14} />
             Add New
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={!filteredData.length}
+            className="flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            <FaDownload size={14} />
+            Export
           </button>
           
           {/* Filter Dropdown */}
@@ -498,7 +590,6 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                 <th className={thCls} style={colWidths.birthplace}>Birthplace</th>
                 <th className={thCls} style={colWidths.tribe}>Tribe</th>
                 <th className={thCls} style={colWidths.status}>STUDENT</th>
-                <th className={thCls} style={colWidths.status}>NON-STUDENT</th>
                 <th className={thCls} style={colWidths.status}>UNEMPLOYED</th>
                 <th className={thCls} style={colWidths.status}>PWD</th>
                 <th className={thCls} style={colWidths.barangay}>Barangay</th>
@@ -510,7 +601,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
               {loading ? (
                 [...Array(12)].map((_, i) => (
                   <tr key={`skeleton-${i}`} className="odd:bg-white even:bg-slate-50">
-                    {Array.from({ length: 12 }).map((__, j) => (
+                    {Array.from({ length: 11 }).map((__, j) => (
                       <td key={j} className={tdCls}>
                         <div className="h-3 w-full max-w-[160px] rounded bg-slate-200" />
                       </td>
@@ -553,54 +644,53 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                     <td className={tdCls} style={colWidths.gender}>{person.gender || 'N/A'}</td>
                     <td className={tdCls} style={colWidths.birthplace}>{person.birthplace || person.address || 'N/A'}</td>
                     <td className={tdCls} style={colWidths.tribe}>{person.lineage || 'N/A'}</td>
-                    <td className={tdCls} style={colWidths.status}>{isStudentOccupation(person.occupation) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.status}>{!isStudentOccupation(person.occupation) && !isEmptyOccupation(person.occupation) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.status}>{isEmptyOccupation(person.occupation) ? 'Yes' : 'No'}</td>
-                    <td className={tdCls} style={colWidths.status}>{hasHealthCondition(person.healthCondition) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{isStudentOccupation(person.occupation, person) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{isUnemployed(person) ? 'Yes' : 'No'}</td>
+                    <td className={tdCls} style={colWidths.status}>{hasHealthCondition(person) ? 'Yes' : 'No'}</td>
                     <td className={tdCls} style={colWidths.barangay}>{person.barangay || 'N/A'}</td>
-                    <td className={tdCls + " text-center"} style={colWidths.action}>
+                    <td className={tdCls + " text-center px-4"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           openModal(person);
                         }}
-                        className="inline-flex items-center justify-center p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
                         title="View Profile"
                       >
-                        <FaEye />
+                        <FaEye size={14} />
                       </button>
                     </td>
-                    <td className={tdCls + " text-center"} style={colWidths.action}>
+                    <td className={tdCls + " text-center px-4"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleUpdate(person);
                         }}
-                        className="inline-flex items-center justify-center p-2 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-colors"
                         title="Edit"
                         disabled={isProcessing}
                       >
-                        <FaEdit />
+                        <FaEdit size={14} />
                       </button>
                     </td>
-                    <td className={tdCls + " text-center"} style={colWidths.action}>
+                    <td className={tdCls + " text-center px-4"} style={colWidths.action}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           requestDelete(person);
                         }}
-                        className="inline-flex items-center justify-center p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
                         title="Delete"
                         disabled={isProcessing}
                       >
-                        <FaTrash />
+                        <FaTrash size={14} />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={12} className={`${tdCls} text-center py-10 bg-white`}>
+                  <td colSpan={14} className={`${tdCls} text-center py-10 bg-white`}>
                     No data found — try adjusting your search or filters.
                   </td>
                 </tr>

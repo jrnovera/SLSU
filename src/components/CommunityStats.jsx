@@ -39,25 +39,45 @@ function CommunityStats() {
   });
 
   // Health classifier
-  const classifyHealth = (val) => {
+  const classifyHealth = (person) => {
+    const val = person?.healthCondition;
+
+    // Check if using new format (Healthy/Not Healthy)
+    if (val === "Healthy") return 'no_health';
+    if (val === "Not Healthy") return 'with_health';
+
+    // Fallback to legacy healthCondition text values
     const s = String(val ?? '').trim().toLowerCase();
-    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === 'healthy' || 
-        s === 'no health condition' || s === 'no health' || s === 'no condition' || 
+    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === 'healthy' ||
+        s === 'no health condition' || s === 'no health' || s === 'no condition' ||
         s === 'good' || s === '-' || s === 'normal') {
       return 'no_health';
     }
     return 'with_health';
   };
 
-  // Unemployed = walang occupation (blank/markers)
-  const isEmptyOccupation = (val) => {
+  // Unemployed checker
+  const isUnemployed = (person) => {
+    // Check new isEmployed field first
+    if (person && person.isEmployed !== undefined && person.isEmployed !== null && person.isEmployed !== "") {
+      return person.isEmployed === false;
+    }
+
+    // Fallback to legacy occupation-based check
+    const val = person?.occupation;
     const s = String(val ?? '').trim().toLowerCase();
     if (!s) return true;
     return ['none', 'n/a', 'na', '-', 'wala'].includes(s);
   };
 
-  // Student detector (with useful synonyms/variants)
-  const isStudentOccupation = (val) => {
+  // Check if person is a student based on isStudent field (new) or occupation (legacy)
+  const isStudentOccupation = (val, person = null) => {
+    // Prioritize the new isStudent field if person object is provided
+    if (person && person.isStudent !== undefined && person.isStudent !== "") {
+      return person.isStudent === "Student";
+    }
+
+    // Fallback to occupation-based check for legacy data
     if (!val) return false;
     const s = String(val).toLowerCase();
     const keys = [
@@ -96,24 +116,24 @@ function CommunityStats() {
         const maleCount = ipData.filter((p) => p.gender === 'Male').length;
         const femaleCount = ipData.filter((p) => p.gender === 'Female').length;
 
-        // Students = occupation matches student keywords
-        const studentsCount = ipData.filter((p) => isStudentOccupation(p.occupation)).length;
+        // Students = based on isStudent field (or occupation for legacy)
+        const studentsCount = ipData.filter((p) => isStudentOccupation(p.occupation, p)).length;
 
-        // Not attending school (≤25) = age <= 25 AND NOT student
+        // Not attending school (≤25) = age <= 25 AND isStudent === "Not Student"
         const notAttending25Below = ipData.reduce((acc, p) => {
           const age = getAge(p);
-          if (age !== null && age <= 25 && !isStudentOccupation(p.occupation)) return acc + 1;
+          if (age !== null && age <= 25 && p.isStudent === "Not Student") return acc + 1;
           return acc;
         }, 0);
 
-        // Unemployed = walang occupation (empty markers)
-        const unemployedCount = ipData.filter((p) => isEmptyOccupation(p.occupation)).length;
+        // Unemployed = based on isEmployed field or occupation for legacy
+        const unemployedCount = ipData.filter((p) => isUnemployed(p)).length;
 
         // Health buckets
         let withHealth = 0;
         let noHealth = 0;
         for (const p of ipData) {
-          const bucket = classifyHealth(p.healthCondition);
+          const bucket = classifyHealth(p);
           if (bucket === 'with_health') withHealth++;
           else noHealth++;
         }

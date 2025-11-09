@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { FaSort, FaSortUp, FaSortDown, FaFilter, FaChevronDown } from 'react-icons/fa';
+import { FaSort, FaSortUp, FaSortDown, FaFilter, FaChevronDown, FaDownload } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import { allBarangays } from '../components/Brgylist';
@@ -15,6 +15,7 @@ import {
 import { db } from '../firebase/config';
 import searchIcon from '../assets/icons/search.png';
 import profileImg from '../assets/icons/user.png'; // Import default profile image
+import exportToXlsx from '../utils/exportToXlsx';
 
 /* simple debounce */
 function useDebouncedValue(value, delay = 250) {
@@ -36,6 +37,15 @@ const hasHealthCondition = (health) => {
   }
   return true;
 };
+
+const isStudentRecord = (ip = {}) =>
+  ip.occupation === 'Student' || ip.status === 'Student';
+
+const isUnemployedRecord = (ip = {}) =>
+  ip.occupation === 'Unemployed' || ip.status === 'Unemployed';
+
+const isNonStudentRecord = (ip = {}) =>
+  !isStudentRecord(ip) && !isUnemployedRecord(ip);
 
 function SuperAdminDashboard() {
   const { currentUser } = useAuth();
@@ -163,13 +173,13 @@ function SuperAdminDashboard() {
     if (selectedStatus) {
       switch(selectedStatus) {
         case 'Student':
-          filtered = filtered.filter(ip => ip.occupation === 'Student' || ip.status === 'Student');
+          filtered = filtered.filter((ip) => isStudentRecord(ip));
           break;
         case 'Non-Student':
-          filtered = filtered.filter(ip => ip.occupation !== 'Student' && ip.status !== 'Student');
+          filtered = filtered.filter((ip) => isNonStudentRecord(ip));
           break;
         case 'Unemployed':
-          filtered = filtered.filter(ip => ip.occupation === 'Unemployed' || ip.status === 'Unemployed');
+          filtered = filtered.filter((ip) => isUnemployedRecord(ip));
           break;
         case 'PWD':
           filtered = filtered.filter(ip => hasHealthCondition(ip.healthCondition));
@@ -306,6 +316,30 @@ function SuperAdminDashboard() {
     return sortConfig.direction === 'ascending' ? 
       <FaSortUp className="inline ml-1 text-blue-600" /> : 
       <FaSortDown className="inline ml-1 text-blue-600" />;
+  };
+
+  const exportColumns = useMemo(() => ([
+    { label: '#', value: (_ip, index) => index + 1 },
+    { label: 'Name', value: (ip) => ip.name || 'N/A' },
+    { label: 'Gender', value: (ip) => ip.gender || 'N/A' },
+    { label: 'Barangay', value: (ip) => ip.barangay || 'N/A' },
+    { label: 'Birthplace', value: (ip) => ip.birthplace || ip.address || 'N/A' },
+    { label: 'Tribe', value: (ip) => ip.lineage || 'N/A' },
+    { label: 'Student', value: (ip) => (isStudentRecord(ip) ? 'Yes' : 'No') },
+    { label: 'Non-Student', value: (ip) => (isNonStudentRecord(ip) ? 'Yes' : 'No') },
+    { label: 'Unemployed', value: (ip) => (isUnemployedRecord(ip) ? 'Yes' : 'No') },
+    { label: 'PWD', value: (ip) => (hasHealthCondition(ip.healthCondition) ? 'Yes' : 'No') },
+  ]), []);
+
+  const handleExport = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const safeTitle = headerTitle.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
+    exportToXlsx({
+      data: filteredList,
+      columns: exportColumns,
+      filename: `${safeTitle || 'indigenous_people'}_${today}.xlsx`,
+      sheetName: (safeTitle || 'IPs').substring(0, 31),
+    });
   };
 
   return (
@@ -501,12 +535,24 @@ function SuperAdminDashboard() {
         <div className="rounded-xl mb-4 overflow-hidden bg-white shadow-md border-2 border-[#c0c0c0]">
           {/* Header */}
           <div className="px-6 py-4 border-b-2 border-[#c0c0c0] bg-[#f0f0f0]">
-            <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
-              {selectedGender && <span className="ml-2">• Gender: {selectedGender}</span>}
-              {selectedStatus && <span className="ml-2">• Status: {selectedStatus}</span>}
-            </p>
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
+                  {selectedGender && <span className="ml-2">• Gender: {selectedGender}</span>}
+                  {selectedStatus && <span className="ml-2">• Status: {selectedStatus}</span>}
+                </p>
+              </div>
+              <button
+                onClick={handleExport}
+                disabled={loading || !filteredList.length}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#194d62] bg-white px-4 py-2 text-sm font-semibold text-[#194d62] shadow-sm transition hover:bg-[#e6eef5] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FaDownload size={14} />
+                Export
+              </button>
+            </div>
           </div>
 
           {/* Results */}
@@ -652,13 +698,13 @@ function SuperAdminDashboard() {
                         {ip.lineage || 'N/A'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
-                        {ip.occupation === 'Student' || ip.status === 'Student' ? 'Yes' : 'No'}
+                        {isStudentRecord(ip) ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
-                        {ip.occupation !== 'Student' && ip.status !== 'Student' && ip.occupation !== 'Unemployed' && ip.status !== 'Unemployed' ? 'Yes' : 'No'}
+                        {isNonStudentRecord(ip) ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
-                        {ip.occupation === 'Unemployed' || ip.status === 'Unemployed' ? 'Yes' : 'No'}
+                        {isUnemployedRecord(ip) ? 'Yes' : 'No'}
                       </td>
                       <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
                         {hasHealthCondition(ip.healthCondition) ? 'Yes' : 'No'}

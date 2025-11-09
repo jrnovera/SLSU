@@ -150,14 +150,18 @@ function IPFormModal({
     age: "",
     gender: "",
     civilStatus: "",
+    isStudent: "",
     educationLevel: "",
-    occupation: "",
+    schoolName: "",
+    isEmployed: "", // true or false
+    occupation: "", // Occupation details
     lineage: "",
     barangay: selectedBarangay ? selectedBarangay.name : "",
     address: "",
     municipality: "Catanauan",
     province: "Quezon",
-    healthCondition: "",
+    healthCondition: "", // "Healthy" or "Not Healthy"
+    healthConditionDetails: "", // Details when "Not Healthy"
     householdMembers: "",
     contactNumber: "",
     familyTree: { ...FAMILY_DEFAULT },
@@ -194,7 +198,10 @@ function IPFormModal({
       age: "",
       gender: "",
       civilStatus: "",
+      isStudent: "",
       educationLevel: "",
+      schoolName: "",
+      isEmployed: "",
       occupation: "",
       lineage: "",
       barangay: selectedBarangay ? selectedBarangay.name : "",
@@ -202,6 +209,7 @@ function IPFormModal({
       municipality: "Catanauan",
       province: "Quezon",
       healthCondition: "",
+      healthConditionDetails: "",
       householdMembers: "",
       contactNumber: "",
       familyTree: { ...FAMILY_DEFAULT },
@@ -255,6 +263,42 @@ function IPFormModal({
         ? calculateAge(initialData.dateOfBirth)
         : (initialData.age ?? "");
 
+      // Handle legacy healthCondition data
+      let healthCondition = initialData.healthCondition || "";
+      let healthConditionDetails = initialData.healthConditionDetails || "";
+
+      // If healthCondition is not "Healthy" or "Not Healthy", convert legacy data
+      if (healthCondition && healthCondition !== "Healthy" && healthCondition !== "Not Healthy") {
+        const normalized = String(healthCondition).trim().toLowerCase();
+        if (!normalized || normalized === 'n/a' || normalized === 'na' ||
+            normalized === 'none' || normalized === 'healthy' ||
+            normalized === 'no health condition' || normalized === 'no health' ||
+            normalized === 'no condition' || normalized === 'good' ||
+            normalized === '-' || normalized === 'normal') {
+          healthCondition = "Healthy";
+          healthConditionDetails = "";
+        } else {
+          healthConditionDetails = initialData.healthCondition;
+          healthCondition = "Not Healthy";
+        }
+      }
+
+      // Handle employment status - convert legacy occupation data
+      let isEmployed = initialData.isEmployed;
+      let occupation = initialData.occupation || "";
+
+      // If isEmployed is not set (legacy data), determine from occupation
+      if (isEmployed === undefined || isEmployed === null || isEmployed === "") {
+        const normalized = String(occupation).trim().toLowerCase();
+        if (!normalized || normalized === 'n/a' || normalized === 'na' ||
+            normalized === 'none' || normalized === '-' || normalized === 'wala') {
+          isEmployed = false;
+          occupation = "";
+        } else {
+          isEmployed = true;
+        }
+      }
+
       setFormData((prev) => ({
         ...prev,
         ...initialData,
@@ -262,6 +306,10 @@ function IPFormModal({
         contactNumber: initialData.contactNumber || "",
         familyTree: familyTreeForForm,
         photoURL: initialData.photoURL || "",
+        healthCondition: healthCondition,
+        healthConditionDetails: healthConditionDetails,
+        isEmployed: isEmployed,
+        occupation: occupation,
       }));
 
       setPhotoPreview(initialData.photoURL || "");
@@ -565,7 +613,7 @@ function IPFormModal({
             <label className="col-span-3 font-semibold text-gray-700">Date of Birth:</label>
             <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} required className="col-span-4 input-style" />
             <label className="col-span-1 font-semibold text-gray-700 text-right">Age:</label>
-            <input type="number" name="age" placeholder="Age" value={formData.age} onChange={handleInputChange} required className="col-span-4 input-style" />
+            <input type="number" name="age" placeholder="Age" value={formData.age} readOnly className="col-span-4 input-style bg-gray-100 cursor-not-allowed" />
           </div>
 
           {/* Gender */}
@@ -594,24 +642,110 @@ function IPFormModal({
             </div>
           </div>
 
-          {/* Education */}
+          {/* Student Status */}
           <div className="grid grid-cols-12 gap-4 items-start">
-            <label className="col-span-3 font-semibold text-gray-700">Education Level:</label>
-            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-              {["No Formal Education", "Elementary", "High School", "College", "Vocational"].map((val) => (
-                <label key={val} className={`radio-style ${formData.educationLevel === val ? "active-radio" : ""}`}>
-                  <input type="radio" name="educationLevel" className="mr-2" checked={formData.educationLevel === val} onChange={() => handleRadioChange("educationLevel", val)} />
+            <label className="col-span-3 font-semibold text-gray-700">Student Status:</label>
+            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {["Student", "Not Student"].map((val) => (
+                <label key={val} className={`radio-style ${formData.isStudent === val ? "active-radio" : ""}`}>
+                  <input
+                    type="radio"
+                    name="isStudent"
+                    className="mr-2"
+                    checked={formData.isStudent === val}
+                    onChange={() => {
+                      handleRadioChange("isStudent", val);
+                      // Clear education level and school name if "Not Student" is selected
+                      if (val === "Not Student") {
+                        setFormData(prev => ({
+                          ...prev,
+                          educationLevel: "",
+                          schoolName: ""
+                        }));
+                      }
+                    }}
+                  />
                   <span className="ml-1">{val}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Occupation */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Occupation:</label>
-            <input type="text" name="occupation" value={formData.occupation} onChange={handleInputChange} className="col-span-9 input-style" />
+          {/* Education Level - Only show if Student */}
+          {formData.isStudent === "Student" && (
+            <>
+              <div className="grid grid-cols-12 gap-4 items-start">
+                <label className="col-span-3 font-semibold text-gray-700">Highest Educational Attainment:</label>
+                <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {["Elementary", "High School", "College", "Vocational"].map((val) => (
+                    <label key={val} className={`radio-style ${formData.educationLevel === val ? "active-radio" : ""}`}>
+                      <input type="radio" name="educationLevel" className="mr-2" checked={formData.educationLevel === val} onChange={() => handleRadioChange("educationLevel", val)} />
+                      <span className="ml-1">{val}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* School Name */}
+              <div className="grid grid-cols-12 gap-4 items-center">
+                <label className="col-span-3 font-semibold text-gray-700">School Name:</label>
+                <input
+                  type="text"
+                  name="schoolName"
+                  value={formData.schoolName}
+                  onChange={handleInputChange}
+                  className="col-span-9 input-style"
+                  placeholder="Enter school name"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Employment Status */}
+          <div className="grid grid-cols-12 gap-4 items-start">
+            <label className="col-span-3 font-semibold text-gray-700">Employment Status:</label>
+            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { label: "Employed", value: true },
+                { label: "Unemployed", value: false }
+              ].map((option) => (
+                <label key={option.label} className={`radio-style ${formData.isEmployed === option.value ? "active-radio" : ""}`}>
+                  <input
+                    type="radio"
+                    name="isEmployed"
+                    className="mr-2"
+                    checked={formData.isEmployed === option.value}
+                    onChange={() => {
+                      handleRadioChange("isEmployed", option.value);
+                      // Clear occupation if "Unemployed" is selected
+                      if (option.value === false) {
+                        setFormData(prev => ({
+                          ...prev,
+                          occupation: ""
+                        }));
+                      }
+                    }}
+                  />
+                  <span className="ml-1">{option.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
+
+          {/* Occupation Details - Only show if Employed */}
+          {formData.isEmployed === true && (
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <label className="col-span-3 font-semibold text-gray-700">Please state the Occupation:</label>
+              <input
+                type="text"
+                name="occupation"
+                value={formData.occupation}
+                onChange={handleInputChange}
+                placeholder="Enter occupation"
+                className="col-span-9 input-style"
+              />
+            </div>
+          )}
 
           {/* Lineage */}
           <div className="grid grid-cols-12 gap-4 items-center">
@@ -625,9 +759,23 @@ function IPFormModal({
                 onChange={handleTribeSearch}
                 onFocus={() => formData.lineage && setShowTribeSuggestions(true)}
                 placeholder="Search for tribe..."
-                className="w-full input-style"
+                className="w-full input-style pr-10"
                 autoComplete="off"
               />
+              {/* Dropdown icon button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTribeSuggestions(LINEAGE_OPTIONS);
+                  setShowTribeSuggestions(!showTribeSuggestions);
+                  tribeInputRef.current?.focus();
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
               {showTribeSuggestions && tribeSuggestions.length > 0 && (
                 <div 
                   ref={suggestionsRef}
@@ -658,21 +806,58 @@ function IPFormModal({
             </select>
           </div>
 
-          {/* Address */}
+          {/* Birthplace */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Address:</label>
+            <label className="col-span-3 font-semibold text-gray-700">Birthplace:</label>
             <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="col-span-9 input-style" />
           </div>
 
-          {/* Health Condition */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Health Condition:</label>
-            <input type="text" name="healthCondition" value={formData.healthCondition} onChange={handleInputChange} className="col-span-9 input-style w-full" />
+          {/* Health Status */}
+          <div className="grid grid-cols-12 gap-4 items-start">
+            <label className="col-span-3 font-semibold text-gray-700">Health Status:</label>
+            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {["Healthy", "Not Healthy"].map((val) => (
+                <label key={val} className={`radio-style ${formData.healthCondition === val ? "active-radio" : ""}`}>
+                  <input
+                    type="radio"
+                    name="healthCondition"
+                    className="mr-2"
+                    checked={formData.healthCondition === val}
+                    onChange={() => {
+                      handleRadioChange("healthCondition", val);
+                      // Clear condition details if "Healthy" is selected
+                      if (val === "Healthy") {
+                        setFormData(prev => ({
+                          ...prev,
+                          healthConditionDetails: ""
+                        }));
+                      }
+                    }}
+                  />
+                  <span className="ml-1">{val}</span>
+                </label>
+              ))}
+            </div>
           </div>
+
+          {/* Health Condition Details - Only show if Not Healthy */}
+          {formData.healthCondition === "Not Healthy" && (
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <label className="col-span-3 font-semibold text-gray-700">Please specify Condition:</label>
+              <input
+                type="text"
+                name="healthConditionDetails"
+                value={formData.healthConditionDetails}
+                onChange={handleInputChange}
+                placeholder="Enter health condition"
+                className="col-span-9 input-style w-full"
+              />
+            </div>
+          )}
 
           {/* Household Members (required only on Add to avoid blocking legacy edits) */}
           <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Household Members:</label>
+            <label className="col-span-3 font-semibold text-gray-700">No. of Household Members:</label>
             <input
               type="number"
               name="householdMembers"
