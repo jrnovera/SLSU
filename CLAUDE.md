@@ -8,10 +8,10 @@ This is a React-based Indigenous People Management and Registration (IPMR) syste
 
 ## Development Commands
 
-- `bunx vite` - Start development server
-- `bunx vite build` - Build for production
-- `bunx eslint .` - Run linter
-- `bunx vite preview` - Preview production build
+- `bunx vite` or `bun run dev` - Start development server
+- `bunx vite build` or `bun run build` - Build for production
+- `bunx eslint .` or `bun run lint` - Run linter
+- `bunx vite preview` or `bun run preview` - Preview production build
 
 ## Architecture
 
@@ -25,38 +25,53 @@ This is a React-based Indigenous People Management and Registration (IPMR) syste
 
 ### Routing Structure
 - Role-based routing with protected routes in `src/App.jsx`
-- `RoleBasedRedirect` component handles initial routing based on user role
+- `RoleBasedRedirect` component handles initial routing based on user role:
+  - IPMR role → redirects to `/admin` (Homepage)
+  - Chieftain role → redirects to `/super-admin` (SuperAdminDashboard)
+  - Regular user → redirects to `/home` (Homepage)
 - Three route protection levels:
   - `ProtectedRoute` - Any authenticated user
-  - `AdminRoute` - Requires "IPMR" role (mapped from super_admin)
-  - `SuperAdminRoute` - Requires "Chieftain" role (mapped from admin)
+  - `AdminRoute` - Requires "IPMR" role (mapped from super_admin in Firestore)
+  - `SuperAdminRoute` - Requires "Chieftain" role (mapped from admin in Firestore)
+- SPA routing supported via `vercel.json` rewrites for Vercel deployment
 
 ### Firebase Integration
-- Configuration in `src/firebase/config.js`
-- Firestore for user data and population records
-- Firebase Storage for image uploads
-- Authentication context in `src/contexts/AuthContext.jsx`
+- Configuration in `src/firebase/config.js` with HMR-safe initialization
+- Firestore for user data and population records (collection: `users`)
+- Firebase Storage locked to specific bucket: `gs://bantay-lahi-project.firebasestorage.app`
+- Authentication context in `src/contexts/AuthContext.jsx`:
+  - Provides `currentUser`, `userRole`, `signup`, `login`, `logout`, `loading`
+  - Uses `browserLocalPersistence` for session management
+  - Auto-clears localStorage on logout
 
 ### Key Components
-- Population tracking and statistics in various page components
-- Family tree visualization using `@jsplumb/browser-ui`
-- Google Maps integration via `google-map-react`
-- Modal components for data entry and viewing
-- reCAPTCHA integration for security (config in `src/config/recaptcha.js`)
+- **Pages**: 7 main pages including Homepage, TotalPopulation, SuperAdminDashboard, Login, Signup, ForgotPassword, Unauthorized
+- **Modals**: IPFormModal, ProfileViewModal, ViewOnlyProfileModal, HealthCategoryModal, StudentCategoryModal, ConfirmationModal, CameraCaptureModal
+- **Visualizations**:
+  - Family tree using `@jsplumb/browser-ui` (FamilyTreeClassic, FamilyTreeNew)
+  - Google Maps integration via `google-map-react` (LocationMap, MapView)
+  - Statistics with `react-circular-progressbar` (StatCard, CommunityStats)
+- **Security**: reCAPTCHA integration (config in `src/config/recaptcha.js`)
 
 ### Styling
-- TailwindCSS v4 for utility-first CSS
-- Custom CSS files for specific components
+- TailwindCSS v4 with `@tailwindcss/vite` plugin
+- Custom CSS files for specific components (e.g., ProtectedRoute.css)
 - Component-scoped styling patterns
+- ESLint configuration with React hooks and refresh plugins
 
 ## Important Notes
 
-- The project uses Bun as the package manager and runtime
-- Role names have legacy mappings that must be preserved for backward compatibility
-- Firebase config contains production keys - handle with care
-- reCAPTCHA keys are exposed in client-side config
-- Population data includes sensitive demographic information
-- Image assets for different barangays are stored in `src/assets/images/`
+- **Runtime**: Uses Bun as the package manager and runtime (not npm/yarn/pnpm)
+- **Role Mapping Critical**: Role names have legacy mappings that MUST be preserved:
+  - Firestore `super_admin` → Display as "IPMR"
+  - Firestore `admin` → Display as "Chieftain"
+  - Never change this mapping logic in `getUserRole()` functions
+- **Sensitive Data**:
+  - Firebase config contains production keys
+  - reCAPTCHA keys are exposed in client-side config
+  - Population data includes sensitive demographic information
+- **Barangay Images**: 47+ barangay images stored in `src/assets/images/` with specific naming patterns
+- **Deployment**: Configured for Vercel with SPA routing support via `vercel.json`
 
 ## File Structure Highlights
 

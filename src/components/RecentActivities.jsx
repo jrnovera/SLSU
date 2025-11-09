@@ -62,19 +62,56 @@ function RecentActivities() {
   };
 
   useEffect(() => {
-    const q = query(collection(db, "indigenousPeople"), orderBy("createdAt", "desc"), limit(1));
+    // Query with orderBy createdAt descending - this will get the most recent document
+    const q = query(
+      collection(db, "indigenousPeople"),
+      orderBy("createdAt", "desc"),
+      limit(1)
+    );
+
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setLatest(docs[0] || null);
+        console.log("RecentActivities: Snapshot received, doc count:", snap.docs.length);
+
+        if (snap.docs.length > 0) {
+          const latestDoc = snap.docs[0];
+          const data = latestDoc.data();
+
+          // Convert Firestore timestamp to readable date for debugging
+          const createdAtDate = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+
+          console.log("Latest document:", {
+            id: latestDoc.id,
+            createdAt: createdAtDate ? createdAtDate.toISOString() : "null",
+            createdAtTimestamp: data.createdAt,
+            firstName: data.firstName,
+            lastName: data.lastName
+          });
+          console.log("Full document data:", JSON.stringify(data, null, 2));
+
+          setLatest({ id: latestDoc.id, ...data });
+        } else {
+          console.log("No documents found");
+          setLatest(null);
+        }
         setLoading(false);
       },
       (err) => {
         console.error("RecentActivities subscribe error:", err);
+        console.error("Error code:", err.code);
+        console.error("Error message:", err.message);
+
+        // If the error is due to missing index, log a helpful message
+        if (err.code === 'failed-precondition' || err.message?.includes('index')) {
+          console.error("⚠️ Firestore index required! Please create an index for 'indigenousPeople' collection ordering by 'createdAt' desc");
+          console.error("The error message should contain a link to create the index automatically.");
+        }
+
         setLoading(false);
       }
     );
+
     return () => unsub();
   }, []);
 

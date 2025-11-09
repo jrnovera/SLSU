@@ -1,6 +1,5 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
-import backgroundImage from '../assets/background.jpg';
 import CommunityStats from '../components/CommunityStats';
 import RecentActivities from '../components/RecentActivities';
 import SearchBar from '../components/SearchBar';
@@ -9,8 +8,7 @@ import LocationMap from '../components/LocationMap';
 
 function Homepage() {
   return (
-    <div className="min-h-screen bg-cover bg-center bg-fixed pt-20" style={{ backgroundImage: `url(${backgroundImage})` }}>
-      <div className="fixed inset-0 bg-white/50 z-0 pointer-events-none"></div>
+    <div className="min-h-screen bg-white pt-20">
       <div className="relative z-10">
       <Navbar />
 

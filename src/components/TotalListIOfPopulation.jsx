@@ -256,13 +256,9 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
   const handleAddSubmit = async (formData) => {
     try {
       setIsProcessing(true);
-      const newPersonData = {
-        ...formData,
-        createdAt: serverTimestamp(),
-      };
-
-      const docRef = await addDoc(collection(db, 'indigenousPeople'), newPersonData);
-      const newPerson = { id: docRef.id, ...newPersonData };
+      // Note: formData already contains createdAt from IPFormModal
+      const docRef = await addDoc(collection(db, 'indigenousPeople'), formData);
+      const newPerson = { id: docRef.id, ...formData };
       
       // Update local data
       const updatedData = [...filteredData, newPerson];
