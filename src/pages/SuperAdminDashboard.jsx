@@ -47,6 +47,19 @@ const getParentName = (ip = {}, type = 'father') => {
   const value = cleanParentField(ip.familyTree?.[type] || ip[type]);
   return value || 'N/A';
 };
+const getParentsLabel = (ip = {}) => {
+  const father = getParentName(ip, 'father');
+  const mother = getParentName(ip, 'mother');
+  const hasFather = father && father !== 'N/A';
+  const hasMother = mother && mother !== 'N/A';
+
+  if (hasFather && hasMother) {
+    return `${father} / ${mother}`;
+  }
+  if (hasFather) return father;
+  if (hasMother) return mother;
+  return 'N/A';
+};
 const getNameKey = (ip = {}) => {
   const last = (ip.lastName || '').toString().toLowerCase();
   const first = (ip.firstName || '').toString().toLowerCase();
