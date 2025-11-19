@@ -216,17 +216,19 @@ function Brgylist({ onBarangaySelect = null }) {
       <button
         onClick={handlePrev}
         disabled={startIndex === 0}
-        className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 text-white p-2 disabled:text-white/30"
+        className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 bg-[#406882] hover:bg-[#062937] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Previous barangays"
       >
-        <FaChevronLeft className="w-5 h-5" />
+        <FaChevronLeft className="w-4 h-4" />
       </button>
 
       <button
         onClick={handleNext}
         disabled={startIndex + visibleCount >= barangays.length}
-        className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 text-white p-2 disabled:text-white/30"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 bg-[#406882] hover:bg-[#062937] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-label="Next barangays"
       >
-        <FaChevronRight className="w-5 h-5" />
+        <FaChevronRight className="w-4 h-4" />
       </button>
 
       {/* Status */}

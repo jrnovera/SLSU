@@ -543,10 +543,10 @@ function IPFormModal({
       <div className="relative bg-white w-full max-w-5xl rounded-lg shadow-lg p-6 overflow-y-auto max-h-[90vh]">
         <button
           onClick={() => onClose()}
-          className="absolute top-4 right-6 text-gray-400 hover:text-gray-600 text-2xl font-bold focus:outline-none"
-          aria-label="Close"
+          className="absolute top-4 right-6 bg-[#406882] hover:bg-[#062937] text-white px-6 py-2 rounded-md font-semibold text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#406882]/50"
+          aria-label="Back"
         >
-          &times;
+          ← Back
         </button>
 
         <h2 className="text-xl font-semibold text-[#1a3b5d] pb-6">
@@ -816,17 +816,20 @@ function IPFormModal({
           <div className="grid grid-cols-12 gap-4 items-start">
             <label className="col-span-3 font-semibold text-gray-700">Health Status:</label>
             <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {["Healthy", "Not Healthy"].map((val) => (
-                <label key={val} className={`radio-style ${formData.healthCondition === val ? "active-radio" : ""}`}>
+              {[
+                { value: "Healthy", label: "No known medical condition" },
+                { value: "Not Healthy", label: "With medical condition" }
+              ].map((option) => (
+                <label key={option.value} className={`radio-style ${formData.healthCondition === option.value ? "active-radio" : ""}`}>
                   <input
                     type="radio"
                     name="healthCondition"
                     className="mr-2"
-                    checked={formData.healthCondition === val}
+                    checked={formData.healthCondition === option.value}
                     onChange={() => {
-                      handleRadioChange("healthCondition", val);
+                      handleRadioChange("healthCondition", option.value);
                       // Clear condition details if "Healthy" is selected
-                      if (val === "Healthy") {
+                      if (option.value === "Healthy") {
                         setFormData(prev => ({
                           ...prev,
                           healthConditionDetails: ""
@@ -834,7 +837,7 @@ function IPFormModal({
                       }
                     }}
                   />
-                  <span className="ml-1">{val}</span>
+                  <span className="ml-1">{option.label}</span>
                 </label>
               ))}
             </div>
@@ -863,10 +866,21 @@ function IPFormModal({
               name="householdMembers"
               value={formData.householdMembers}
               onChange={handleInputChange}
+              onKeyDown={(e) => {
+                // Prevent decimal point, minus sign, and 'e' (scientific notation)
+                if (e.key === '.' || e.key === '-' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+              }}
+              onInput={(e) => {
+                // Remove any decimal values if entered
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+              }}
               min={0}
               step={1}
               className="col-span-9 input-style"
               required={!isEditing}
+              placeholder="Enter whole number"
             />
           </div>
 

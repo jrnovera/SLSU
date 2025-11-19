@@ -146,7 +146,16 @@ export default function ViewOnlyProfileModal({
               <section className="rounded-xl border border-slate-200/70 bg-slate-50/40 p-4">
                 <h4 className="mb-2 text-xs font-semibold text-slate-600">Other Details</h4>
                 <dl>
-                  <Row label="Health Condition" value={profile.healthCondition} />
+                  <Row 
+                    label="Health Condition" 
+                    value={
+                      profile.healthCondition === 'Healthy' 
+                        ? 'No known medical condition' 
+                        : profile.healthCondition === 'Not Healthy'
+                          ? 'With medical condition'
+                          : profile.healthCondition
+                    } 
+                  />
                   <Row label="Barangay" value={profile.barangay} />
                   <Row label="Address" value={profile.address || "—"} />
                   <Row label="Contact Number" value={profile.contactNumber} />

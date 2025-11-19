@@ -95,8 +95,10 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
 
   const healthSummary =
     healthCondition === 'Not Healthy'
-      ? (healthConditionDetails || 'Not Healthy')
-      : (healthCondition || 'N/A');
+      ? 'With medical condition'
+      : healthCondition === 'Healthy'
+        ? 'No known medical condition'
+        : (healthCondition || 'N/A');
 
   const father = familyTree.father || person.father || 'N/A';
   const mother = familyTree.mother || person.mother || 'N/A';
