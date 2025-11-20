@@ -62,10 +62,11 @@ function RecentActivities() {
   };
 
   useEffect(() => {
-    // Query with orderBy createdAt descending - this will get the most recent document
+    // Query with orderBy updatedAt descending - this will get the most recent document
+    // Using updatedAt instead of createdAt because updatedAt is always set for both new and edited records
     const q = query(
       collection(db, "indigenousPeople"),
-      orderBy("createdAt", "desc"),
+      orderBy("updatedAt", "desc"),
       limit(1)
     );
 
@@ -79,12 +80,12 @@ function RecentActivities() {
           const data = latestDoc.data();
 
           // Convert Firestore timestamp to readable date for debugging
-          const createdAtDate = data.createdAt?.toDate ? data.createdAt.toDate() : null;
+          const updatedAtDate = data.updatedAt?.toDate ? data.updatedAt.toDate() : null;
 
           console.log("Latest document:", {
             id: latestDoc.id,
-            createdAt: createdAtDate ? createdAtDate.toISOString() : "null",
-            createdAtTimestamp: data.createdAt,
+            updatedAt: updatedAtDate ? updatedAtDate.toISOString() : "null",
+            updatedAtTimestamp: data.updatedAt,
             firstName: data.firstName,
             lastName: data.lastName
           });
@@ -104,7 +105,7 @@ function RecentActivities() {
 
         // If the error is due to missing index, log a helpful message
         if (err.code === 'failed-precondition' || err.message?.includes('index')) {
-          console.error("⚠️ Firestore index required! Please create an index for 'indigenousPeople' collection ordering by 'createdAt' desc");
+          console.error("⚠️ Firestore index required! Please create an index for 'indigenousPeople' collection ordering by 'updatedAt' desc");
           console.error("The error message should contain a link to create the index automatically.");
         }
 
