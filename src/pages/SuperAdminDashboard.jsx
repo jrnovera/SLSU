@@ -383,22 +383,22 @@ function SuperAdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#dcdcdc] mt-20 ">
+    <div className="min-h-screen bg-[#f7f7f7] mt-20 text-[#1f1f1f]">
       <Navbar />
       <div className="w-full px-6 py-8">
         {/* Top Controls */}
-        <div className="bg-white px-6 py-4 rounded-md shadow mb-4">
+        <div className="bg-[#dc837d] text-white px-6 py-4 rounded-xl shadow-md mb-4 border border-[#c36d67]">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* Left: Title + Controls */}
             <div className="flex flex-wrap items-center gap-3">
-              <h2 style={{ color: '#194d62' }} className="text-xl font-extrabold">
+              <h2 className="text-xl font-extrabold">
                 {selectedBarangay ? `Barangay ${selectedBarangay.name}` : 'All Barangays'}
               </h2>
 
               <select
                 value={selectedBarangay ? selectedBarangay.name : ''}
                 onChange={handleBarangayChange}
-                className="px-4 py-2 border border-black text-sm rounded-sm focus:outline-none w-[220px]"
+                className="px-4 py-2 border border-black text-sm rounded-full focus:outline-none w-[220px] text-[#1f1f1f] bg-white"
               >
                 <option value="">All Barangays</option>
                 {allBarangays.map((brgy) => (
@@ -412,7 +412,7 @@ function SuperAdminDashboard() {
               <div className="relative" ref={filterRef}>
                 <button 
                   onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-                  className="flex items-center justify-between px-4 py-2 border border-black text-sm rounded-sm focus:outline-none w-[150px] bg-black text-white"
+                  className="flex items-center justify-between px-4 py-2 border border-white/70 text-sm rounded-full focus:outline-none w-[170px] bg-white text-[#1f1f1f]"
                 >
                   <span>
                     {selectedGender || selectedStatus || "All Filters"}
@@ -516,7 +516,7 @@ function SuperAdminDashboard() {
                     setSelectedStatus(null);
                     setShowFilterDropdown(false);
                   }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-sm hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-white text-[#1f1f1f] rounded-full border border-white/60 hover:bg-[#f5d2d0] transition-colors"
                 >
                   Reset Filter
                 </button>
@@ -536,7 +536,7 @@ function SuperAdminDashboard() {
                 }}
                 onFocus={() => suggestions.length && setShowSug(true)}
                 onKeyDown={onKeyDown}
-                className="w-full pl-4 pr-10 py-2 rounded-full bg-[#F9F9F9] text-sm focus:outline-none border border-gray-200"
+                className="w-full pl-4 pr-10 py-2 rounded-full bg-white text-sm focus:outline-none border border-[#d6c7bf] shadow-sm"
               />
               <img
                 src={searchIcon}
@@ -572,13 +572,13 @@ function SuperAdminDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl mb-4 overflow-hidden bg-white shadow-md border-2 border-[#c0c0c0]">
+        <div className="rounded-2xl mb-4 overflow-hidden bg-white shadow-md border border-[#d6c7bf]">
           {/* Header */}
-          <div className="px-6 py-4 border-b-2 border-[#c0c0c0] bg-[#f0f0f0]">
+          <div className="px-6 py-4 border-b border-[#d6c7bf] bg-[#f7f7f7]">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 style={{ color: '#194d62' }} className="text-lg font-bold">{headerTitle}</h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <h2 className="text-lg font-bold text-[#1f1f1f]">{headerTitle}</h2>
+                <p className="mt-1 text-sm text-gray-600">
                   {filteredList.length} {filteredList.length === 1 ? 'result' : 'results'}
                   {selectedGender && <span className="ml-2">• Gender: {selectedGender}</span>}
                   {selectedStatus && <span className="ml-2">• Status: {selectedStatus}</span>}
@@ -587,7 +587,7 @@ function SuperAdminDashboard() {
               <button
                 onClick={handleExport}
                 disabled={loading || !filteredList.length}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#194d62] bg-white px-4 py-2 text-sm font-semibold text-[#194d62] shadow-sm transition hover:bg-[#e6eef5] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[#a01d27] bg-[#b6222e] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9f1c25] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaDownload size={14} />
                 Export
@@ -606,21 +606,21 @@ function SuperAdminDashboard() {
               </p>
             ) : (
               <table className="w-full border-collapse" style={{ borderSpacing: 0 }}>
-                <thead className="bg-[#e9ecef]">
+                <thead className="bg-[#f1e4e4]">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center">
                         # <FaFilter className="ml-1 text-gray-400" />
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-center font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center justify-center">
                         Photo
                       </div>
                     </th>
                     <th 
                       onClick={() => requestSort('name')} 
-                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center">
                         Name {getSortIcon('name')}
@@ -628,7 +628,7 @@ function SuperAdminDashboard() {
                     </th>
                     <th 
                       onClick={() => requestSort('gender')} 
-                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center">
                         Gender {getSortIcon('gender')}
@@ -636,43 +636,43 @@ function SuperAdminDashboard() {
                     </th>
                     <th 
                       onClick={() => requestSort('barangay')} 
-                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center">
                         Barangay {getSortIcon('barangay')}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center">
                         Birthplace
                       </div>
                     </th>
                     <th 
                       onClick={() => requestSort('lineage')} 
-                      className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center">
                         Tribe {getSortIcon('lineage')}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center">
                         Father
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center">
                         Mother
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
+                    <th className="px-4 py-3 text-left font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none">
                       <div className="flex items-center">
                         Father &amp; Mother
                       </div>
                     </th>
                     <th 
                       onClick={() => requestSort('isStudent')} 
-                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center justify-center">
                         STUDENT {getSortIcon('isStudent')}
@@ -680,7 +680,7 @@ function SuperAdminDashboard() {
                     </th>
                     <th 
                       onClick={() => requestSort('isNonStudent')} 
-                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center justify-center">
                         NON-STUDENT {getSortIcon('isNonStudent')}
@@ -688,7 +688,7 @@ function SuperAdminDashboard() {
                     </th>
                     <th 
                       onClick={() => requestSort('isUnemployed')} 
-                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center justify-center">
                         UNEMPLOYED {getSortIcon('isUnemployed')}
@@ -696,15 +696,10 @@ function SuperAdminDashboard() {
                     </th>
                     <th 
                       onClick={() => requestSort('hasHealthCondition')} 
-                      className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none hover:bg-[#d9e1f2]"
+                      className="px-4 py-3 text-center font-semibold text-sm text-[#1f1f1f] border border-[#d6c7bf] cursor-pointer select-none hover:bg-[#f5d2d0]"
                     >
                       <div className="flex items-center justify-center">
                         PWD {getSortIcon('hasHealthCondition')}
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-center font-semibold text-sm text-[#194d62] border-2 border-[#c0c0c0] cursor-pointer select-none">
-                      <div className="flex items-center justify-center">
-                        Actions
                       </div>
                     </th>
                   </tr>
@@ -713,13 +708,13 @@ function SuperAdminDashboard() {
                   {filteredList.map((ip, index) => (
                     <tr 
                       key={ip.id} 
-                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fa]'} hover:bg-[#e8f4f9]`}
+                      className={`${index % 2 === 0 ? 'bg-white' : 'bg-[#fdf4f4]'} hover:bg-[#f5d2d0]`}
                       style={{ transition: 'background-color 0.2s' }}
                     >
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         {index + 1}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         <div className="flex justify-center">
                           <img 
                             src={ip.photoURL || ip.image || profileImg} 
@@ -732,52 +727,52 @@ function SuperAdminDashboard() {
                           />
                         </div>
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         <span 
                           onClick={() => handleViewProfile(ip)} 
-                          className="text-gray-800 font-medium cursor-pointer hover:underline hover:text-blue-600"
+                          className="text-gray-800 font-medium cursor-pointer hover:underline hover:text-[#b6222e]"
                         >
                           {ip.name}
                         </span>
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {ip.gender || 'N/A'}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {ip.barangay || 'N/A'}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {ip.birthplace || ip.address || 'N/A'}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {ip.lineage || 'N/A'}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {getParentName(ip, 'father')}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {getParentName(ip, 'mother')}
                       </td>
-                      <td className="px-4 py-2 border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 border border-[#d6c7bf]">
                         {getParentsLabel(ip)}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         {isStudentRecord(ip) ? 'Yes' : 'No'}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         {isNonStudentRecord(ip) ? 'Yes' : 'No'}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         {isUnemployedRecord(ip) ? 'Yes' : 'No'}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         {hasHealthCondition(ip.healthCondition) ? 'Yes' : 'No'}
                       </td>
-                      <td className="px-4 py-2 text-center border-2 border-[#c0c0c0]">
+                      <td className="px-4 py-2 text-center border border-[#d6c7bf]">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleViewProfile(ip)}
-                            className="bg-[#6998ab] text-white text-sm px-3 py-1 rounded border border-[#5a849a] hover:bg-[#194d62] transition-colors"
+                            className="bg-[#b6222e] text-white text-sm px-3 py-1 rounded-full border border-[#a01d27] hover:bg-[#9f1c25] transition-colors"
                           >
                             View
                           </button>

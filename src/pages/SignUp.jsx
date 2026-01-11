@@ -5,6 +5,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { RECAPTCHA_SITE_KEY } from '../config/recaptcha';
+import logoPNG from '../assets/icons/logoPNG.png';
 import './SignUp.css';
 
 function Signup() {
@@ -14,6 +15,7 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('Chieftain'); 
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -79,6 +81,32 @@ function Signup() {
     if (confirmInput) confirmInput.value = '';
   };
 
+  // Password validation function
+  const validatePassword = (password) => {
+    const minLength = 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSymbols = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    if (password.length < minLength) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!hasUpperCase) {
+      return "Password must contain at least one uppercase letter";
+    }
+    if (!hasLowerCase) {
+      return "Password must contain at least one lowercase letter";
+    }
+    if (!hasNumbers) {
+      return "Password must contain at least one number";
+    }
+    if (!hasSymbols) {
+      return "Password must contain at least one symbol (!@#$%^&*(),.?\":{}|<>)";
+    }
+    return null; // Password is valid
+  };
+
   // Handle reCAPTCHA change
   const handleRecaptchaChange = (token) => {
     setRecaptchaToken(token);
@@ -90,21 +118,25 @@ function Signup() {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     
     // We're not saving form data to ensure fields are empty after logout
 
     // Validate form
+    if (!displayName.trim()) {
+      return setError("Display name is required");
+    }
+
+    // Validate password strength
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      return setError(passwordError);
+    }
+
     if (password !== confirmPassword) {
       return setError("Passwords do not match!");
     }
 
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters long");
-    }
-
-    if (!displayName.trim()) {
-      return setError("Display name is required");
-    }
 
     if (!recaptchaToken) {
       return setError("Please complete the reCAPTCHA verification");
@@ -124,14 +156,13 @@ function Signup() {
         recaptchaRef.current.reset();
       }
       
-      // Redirect based on role
-      if (role === 'IPMR') {
-        navigate('/admin');
-      } else if (role === 'Chieftain') {
-        navigate('/super-admin');
-      } else {
-        navigate('/home');
-      }
+      // Show success message and redirect to login
+      setSuccess('Account created successfully! Please check your email to verify your account before logging in.');
+      
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (error) {
       console.error('Signup error:', error);
       if (error.code === 'auth/email-already-in-use') {
@@ -153,11 +184,12 @@ function Signup() {
     <div className="signup-container">
       <div className="signup-card">
         <div className="signup-header">
-          <h1>Bantay Lahi</h1>
+           <img src={logoPNG} alt="LIKHA Logo" className="h-20 inline-block object-contain" />
           <h2>Create Account</h2>
         </div>
         
         {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
         
         {/* Hidden dummy form to trick browser autofill */}
         <div style={{ display: 'none' }}>
@@ -240,7 +272,26 @@ function Signup() {
                 )}
               </button>
             </div>
-            <small className="password-hint">Password must be at least 6 characters</small>
+            <div className="password-requirements">
+              <small className="password-hint">Password must contain:</small>
+              <ul className="requirements-list">
+                <li className={password.length >= 8 ? 'valid' : 'invalid'}>
+                  ✓ At least 8 characters
+                </li>
+                <li className={/[A-Z]/.test(password) ? 'valid' : 'invalid'}>
+                  ✓ One uppercase letter (A-Z)
+                </li>
+                <li className={/[a-z]/.test(password) ? 'valid' : 'invalid'}>
+                  ✓ One lowercase letter (a-z)
+                </li>
+                <li className={/\d/.test(password) ? 'valid' : 'invalid'}>
+                  ✓ One number (0-9)
+                </li>
+                <li className={/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'valid' : 'invalid'}>
+                  ✓ One symbol (!@#$%^&*)
+                </li>
+              </ul>
+            </div>
           </div>
           
           <div className="form-group">

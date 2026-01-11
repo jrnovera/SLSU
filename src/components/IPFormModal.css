@@ -13,19 +13,20 @@
 }
 
 .modal-content {
-  background-color: white;
+  background-color: #2a1a1a;
   border-radius: 8px;
   padding: 20px;
   width: 80%;
   max-width: 800px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid #3a2a2a;
 }
 
 .modal-content h2 {
   text-align: center;
-  color: #1a3b5d;
+  color: #d4c4a8;
   margin-bottom: 20px;
   font-size: 1.5rem;
   font-weight: bold;
@@ -38,7 +39,7 @@
 }
 
 .ip-form-table tr {
-  border: 1px solid #ccc;
+  border: 1px solid #3a2a2a;
 }
 
 .ip-form-table td {
@@ -49,8 +50,9 @@
 .ip-form-table td:first-child {
   width: 30%;
   font-weight: bold;
-  background-color: #f9f9f9;
-  border-right: 1px solid #ccc;
+  background-color: #1e1412;
+  border-right: 1px solid #3a2a2a;
+  color: #d4c4a8;
 }
 
 .ip-form-table input[type="text"],
@@ -60,9 +62,11 @@
 .family-relation-dropdown {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #4a2020;
   border-radius: 4px;
   box-sizing: border-box;
+  background-color: #1e1412;
+  color: #f5f0e8;
 }
 
 .name-inputs {
@@ -106,8 +110,8 @@
 
 .cancel-button {
   padding: 8px 16px;
-  background-color: #95a5a6;
-  color: white;
+  background-color: #3a2a2a;
+  color: #d4c4a8;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -115,19 +119,19 @@
 
 .add-button, .update-button {
   padding: 8px 16px;
-  background-color: #3498db;
-  color: white;
+  background-color: #6b3030;
+  color: #f5f0e8;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
 .cancel-button:hover {
-  background-color: #7f8c8d;
+  background-color: #4a2020;
 }
 
 .add-button:hover, .update-button:hover {
-  background-color: #2980b9;
+  background-color: #8b4040;
 }
 
 /* Family Tree Inputs */
@@ -145,21 +149,23 @@
 .family-member-input label {
   width: 100px;
   font-weight: bold;
-  color: #1a3b5d;
+  color: #d4c4a8;
   flex-shrink: 0;
 }
 
 .family-member-input input {
   flex: 1;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #4a2020;
   border-radius: 4px;
+  background-color: #1e1412;
+  color: #f5f0e8;
 }
 
 .family-member-input input:focus {
-  border-color: #7FB3D5;
+  border-color: #6b3030;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(127, 179, 213, 0.2);
+  box-shadow: 0 0 0 2px rgba(107, 48, 48, 0.3);
 }
 
 /* Responsive adjustments */
@@ -177,7 +183,7 @@
   .ip-form-table td:first-child {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #3a2a2a;
   }
   
   .name-inputs {

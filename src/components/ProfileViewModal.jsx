@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { FaUser } from 'react-icons/fa';
 import { CircularProgressbar } from 'react-circular-progressbar';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import 'react-circular-progressbar/dist/styles.css';
 import profileImg from '../assets/icons/user.png'; // ✅ default avatar
 
@@ -107,6 +109,64 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
   const children = toArray(familyTree.children || person.children);
   const contactLabel = contactNumber || 'N/A';
   const addressLabel = address || 'N/A';
+  const lineageLabel = person?.lineage || 'N/A';
+  const [lineagePercent, setLineagePercent] = useState(0);
+  const [lineageCount, setLineageCount] = useState(0);
+  const [lineageTotal, setLineageTotal] = useState(0);
+  const [lineageLoading, setLineageLoading] = useState(false);
+  const [lineageError, setLineageError] = useState('');
+  const [topLineages, setTopLineages] = useState([]);
+  const primaryPct = topLineages[0]?.pct ? Number(topLineages[0].pct) : (Number.isFinite(lineagePercent) ? lineagePercent : 0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadLineageStats = async () => {
+      if (!lineageLabel || lineageLabel === 'N/A') {
+        setLineagePercent(0);
+        setLineageCount(0);
+        setLineageTotal(0);
+        return;
+      }
+      setLineageLoading(true);
+      setLineageError('');
+      try {
+        const snap = await getDocs(collection(db, 'indigenousPeople'));
+        let total = 0;
+        let match = 0;
+        const counts = {};
+        snap.forEach((doc) => {
+          const data = doc.data() || {};
+          const lin = (data.lineage || '').toString().trim();
+          if (!lin) return;
+          total += 1;
+          counts[lin] = (counts[lin] || 0) + 1;
+          if (lin.toLowerCase() === lineageLabel.toLowerCase()) match += 1;
+        });
+        if (!cancelled) {
+          setLineageTotal(total);
+          setLineageCount(match);
+          const pct = total ? ((match / total) * 100).toFixed(1) : 0;
+          setLineagePercent(Number(pct));
+          const sorted = Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([name, count]) => ({
+              name,
+              count,
+              pct: total ? ((count / total) * 100).toFixed(1) : '0.0',
+            }));
+          setTopLineages(sorted);
+        }
+      } catch (e) {
+        if (!cancelled) setLineageError('Failed to load tribe stats');
+        console.error('Failed to load tribe stats', e);
+      } finally {
+        if (!cancelled) setLineageLoading(false);
+      }
+    };
+    loadLineageStats();
+    return () => { cancelled = true; };
+  }, [lineageLabel]);
 
   // Family Tree variables - COMMENTED OUT FOR NOW
   // const father = familyTree.father || person.father || 'N/A';
@@ -121,150 +181,133 @@ const ProfileViewModal = ({ isOpen, onClose, person }) => {
       onRequestClose={onClose}
       contentLabel="IP Profile"
       appElement={document.getElementById('root')}
-      className="w-[95%] max-w-6xl bg-white rounded-xl shadow-lg p-6 outline-none max-h-[90vh] overflow-y-auto relative"
-      overlayClassName="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+      className="w-[95%] max-w-6xl bg-gradient-to-b from-[#b65959] to-[#b27a7a] rounded-2xl shadow-2xl p-6 outline-none max-h-[90vh] overflow-y-auto relative border-4 border-[#993232]"
+      overlayClassName="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
     >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        aria-label="Close"
-        className="absolute right-4 top-3 text-gray-400 hover:text-gray-600 text-2xl leading-none"
-      >
-        &times;
-      </button>
+      <div className="flex items-center justify-between bg-[#993232] text-white rounded-xl px-5 py-3 mb-5 shadow-md">
+        <h1 className="text-2xl font-semibold tracking-wide">INDIVIDUAL DETAILS</h1>
+        <button
+          onClick={onClose}
+          className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-full border border-white/40 transition"
+        >
+          Go Back
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Detailed Profile */}
-        <div className="bg-gray-50 rounded-lg p-4 lg:col-span-2 space-y-4">
-          <div className="flex flex-col items-center text-center space-y-3">
-            <div className="h-24 w-24 rounded-full overflow-hidden ring-2 ring-gray-200 bg-gray-100 flex items-center justify-center">
-              {avatarSrc ? (
-                <img
-                  src={avatarSrc}
-                  alt={fullName || 'Profile photo'}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = profileImg;
-                  }}
-                />
-              ) : (
-                <FaUser className="text-gray-500" size={48} />
-              )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-[#1a0e0e]">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white/80 rounded-xl shadow-md border border-[#b16a6a] p-5">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="h-14 w-14 rounded-full overflow-hidden ring-2 ring-[#b16a6a] bg-white flex items-center justify-center">
+                {avatarSrc ? (
+                  <img
+                    src={avatarSrc}
+                    alt={fullName || 'Profile photo'}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = profileImg;
+                    }}
+                  />
+                ) : (
+                  <FaUser className="text-[#b16a6a]" size={32} />
+                )}
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-wide text-[#5e3232]">Full Name</p>
+                <h2 className="text-2xl font-semibold text-[#1a0e0e]">{fullName}</h2>
+              </div>
             </div>
-            <div>
-              <p className="text-sm uppercase tracking-wide text-gray-500">Full Name</p>
-              <h2 className="text-2xl font-semibold text-gray-900">{fullName}</h2>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <InfoSection
-              title="Personal Details"
-              rows={[
-                { label: 'Date of Birth', value: formatDOB(dateOfBirth) },
-                { label: 'Age', value: age ?? 'N/A' },
-                { label: 'Gender', value: gender || 'N/A' },
-                { label: 'Civil Status', value: civilStatus || 'N/A' },
-              ]}
-            />
+            <div className="grid md:grid-cols-2 gap-4">
+              <InfoSection
+                title="Personal Information"
+                rows={[
+                  { label: 'Age', value: age ?? 'N/A' },
+                  { label: 'Gender', value: gender || 'N/A' },
+                  { label: 'Date of Birth', value: formatDOB(dateOfBirth) },
+                  { label: 'Civil Status', value: civilStatus || 'N/A' },
+                  { label: 'Nationality', value: person?.nationality || 'N/A' },
+                  { label: 'Religion', value: person?.religion || 'N/A' },
+                ]}
+              />
 
-            <InfoSection
-              title="Address & Contact"
-              rows={[
-                { label: 'Barangay', value: barangay || 'N/A' },
-                { label: 'Street / Sitio', value: addressLabel },
-                { label: 'Municipality', value: municipality || 'N/A' },
-                { label: 'Province', value: province || 'N/A' },
-                { label: 'Contact No.', value: contactLabel },
-              ]}
-            />
+              <InfoSection
+                title="Cultural & Household"
+                rows={[
+                  { label: 'Household Members', value: householdMembers || 'N/A' },
+                  { label: "Father's Full Name", value: father },
+                  { label: "Mother's Full Name", value: mother },
+                ]}
+              />
 
-            <InfoSection
-              title="Education & Work"
-              rows={[
-                { label: 'Student Status', value: studentStatus },
-                { label: 'Education Level', value: educationLevel || 'N/A' },
-                { label: 'School Name', value: schoolName || 'N/A' },
-                { label: 'Employment Status', value: employmentStatus },
-                { label: 'Occupation', value: occupationLabel },
-              ]}
-            />
+              <InfoSection
+                title="Address and Contact Information"
+                rows={[
+                  { label: 'Complete Address', value: addressLabel },
+                  { label: 'Barangay', value: barangay || 'N/A' },
+                  { label: 'Municipality/City', value: municipality || 'N/A' },
+                  { label: 'Province', value: province || 'N/A' },
+                  { label: 'Zip Code', value: person?.zipCode || 'N/A' },
+                  { label: 'Contact Number', value: contactLabel },
+                ]}
+              />
 
-            <InfoSection
-              title="Health & Household"
-              rows={[
-                { label: 'Health Condition', value: healthSummary },
-                {
-                  label: 'Health Details',
-                  value:
-                    healthCondition === 'Not Healthy'
-                      ? (healthConditionDetails || 'Not provided')
-                      : (healthConditionDetails || 'N/A'),
-                },
-                { label: 'Household Members', value: householdMembers || 'N/A' },
-              ]}
-            />
-          </div>
-        </div>
-
-        {/* Tribe card */}
-        <div className="bg-gray-50 rounded-lg p-6 flex flex-col items-center shadow-sm lg:col-span-1">
-          <h2 className="text-lg font-semibold text-center text-gray-800 border-b border-gray-200 pb-3 w-full">
-            Tribe
-          </h2>
-
-          <div className="flex flex-col items-center justify-center mt-8 space-y-4">
-            <div className="w-32 h-32">
-              <CircularProgressbar
-                value={100}
-                text="100%"
-                styles={{
-                  path: { stroke: '#f59e0b' },
-                  trail: { stroke: '#e5e7eb' },
-                  text: { fill: '#1f2937', fontSize: '16px', fontWeight: 600 },
-                }}
+              <InfoSection
+                title="Education and Occupation"
+                rows={[
+                  { label: 'Highest Educational Attainment', value: educationLevel || 'N/A' },
+                  { label: 'School (if Student)', value: schoolName || 'N/A' },
+                  { label: 'Employment Status', value: employmentStatus },
+                  { label: 'Occupation', value: occupationLabel },
+                ]}
               />
             </div>
-            <p className="text-lg font-semibold text-gray-800 text-center">
-              {person?.lineage || 'Unknown'}
-            </p>
           </div>
         </div>
 
-        {/* Family details */}
-        {/* <div className="bg-gray-50 rounded-lg p-6 space-y-4 lg:col-span-1">
-          <h2 className="text-lg font-semibold text-gray-800">Family Members</h2>
-          <div className="space-y-3 text-sm text-gray-700">
-            <p><span className="font-semibold text-gray-600">Father:</span> {father || 'N/A'}</p>
-            <p><span className="font-semibold text-gray-600">Mother:</span> {mother || 'N/A'}</p>
-            <p><span className="font-semibold text-gray-600">Spouse:</span> {spouse || 'N/A'}</p>
+        <div className="bg-white/85 rounded-xl shadow-md border border-[#b16a6a] p-5 flex flex-col gap-4">
+          <div className="bg-white rounded-lg border border-[#b16a6a] p-4">
+            <h3 className="text-center text-lg font-semibold text-[#b6222e] mb-3">Tribe</h3>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-32 h-32">
+                <CircularProgressbar
+                  value={primaryPct}
+                  text={`${primaryPct}%`}
+                  styles={{
+                    path: { stroke: '#b6222e', strokeLinecap: 'round' },
+                    trail: { stroke: '#f5d2d0' },
+                    text: { fill: '#b6222e', fontSize: '18px', fontWeight: 700 },
+                  }}
+                />
+              </div>
+              <div className="text-center text-sm text-[#5e3232]">
+                {lineageLoading
+                  ? 'Calculating tribe share…'
+                  : lineageError
+                    ? lineageError
+                    : lineageTotal
+                      ? `${lineageCount} of ${lineageTotal} records`
+                      : 'No tribe data'}
+              </div>
+              <div className="space-y-2 text-center w-full">
+                <div className="px-3 py-1 bg-[#b6222e] text-white rounded-full text-sm font-semibold shadow-sm">
+                  {topLineages[0]?.pct || primaryPct}% {topLineages[0]?.name || lineageLabel || 'Unknown'}
+                </div>
+                {topLineages[1] && (
+                  <div className="px-3 py-1 bg-[#f5d547] text-[#7a3b00] rounded-full text-sm font-semibold shadow-sm">
+                    {topLineages[1].pct}% {topLineages[1].name}
+                  </div>
+                )}
+                {topLineages[2] && (
+                  <div className="px-3 py-1 bg-[#ffe89c] text-[#7a3b00] rounded-full text-sm font-semibold shadow-sm">
+                    {topLineages[2].pct}% {topLineages[2].name}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Siblings</h3>
-            {siblings.length ? (
-              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
-                {siblings.map((s, idx) => (
-                  <li key={`sibling-${idx}`}>{s}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-400">No siblings recorded.</p>
-            )}
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1">Children</h3>
-            {children.length ? (
-              <ul className="list-disc list-inside text-sm text-gray-800 space-y-1">
-                {children.map((c, idx) => (
-                  <li key={`child-${idx}`}>{c}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-gray-400">No children recorded.</p>
-            )}
-          </div>
-        </div> */}
+        </div>
       </div>
     </Modal>
   );

@@ -1,12 +1,13 @@
 /* FamilyTreeNew.css */
 .family-tree-container {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f7fa;
+  background: #1e1412;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   overflow-x: auto;
   min-height: 400px;
+  border: 1px solid #3a2a2a;
 }
 
 /* Tribe Stats Panel */
@@ -15,8 +16,8 @@
 }
 
 .tribe-stats-content {
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid #3a2a2a;
+  background: #2a1a1a;
   padding: 12px;
   border-radius: 8px;
 }
@@ -31,13 +32,13 @@
 .tribe-stats-header h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #d4c4a8;
   margin: 0;
 }
 
 .tribe-stats-header span {
   font-size: 12px;
-  color: #6b7280;
+  color: #d4c4a8;
 }
 
 .tribe-list {
@@ -59,9 +60,9 @@
   margin-left: 8px;
   padding: 2px 8px;
   border-radius: 9999px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  color: #374151;
+  background: #3a2a2a;
+  border: 1px solid #4a2020;
+  color: #d4c4a8;
 }
 
 .error {
@@ -80,7 +81,7 @@
 
 .family-tree h2 {
   font-size: 24px;
-  color: #333;
+  color: #d4c4a8;
   margin-bottom: 20px;
 }
 
@@ -116,12 +117,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: white;
+  background: #2a1a1a;
   border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 2;
   min-width: 80px;
+  border: 1px solid #3a2a2a;
+  color: #d4c4a8;
 }
 
 .person-icon {
@@ -137,7 +140,7 @@
 
 .person-role {
   font-size: 12px;
-  color: #666;
+  color: #d4c4a8;
   text-align: center;
 }
 

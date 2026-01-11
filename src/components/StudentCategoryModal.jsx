@@ -3,10 +3,9 @@ import studentIcon from "../assets/icons/student.png";
 import notAttendingIcon from "../assets/icons/not-attending.png";
 import returnIcon from "../assets/icons/return.png";
 
-/** Figma tokens */
-const BLUE = "#7cafca";
-const TILE_GRAY = "#c6c6c6";
-const TEXT_BLUE = "#194d62";
+const PRIMARY = "#b6222e";
+const TILE_GRAY = "#f1e4e4";
+const TEXT_PRIMARY = "#1a0e0e";
 
 export default function StudentCategoryModal({
   open,
@@ -62,7 +61,7 @@ export default function StudentCategoryModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="student-category-title"
-        className="relative w-[600px] rounded-[32px] bg-white shadow-[0_24px_60px_rgba(0,0,0,.18)]"
+        className="relative w-[600px] rounded-[32px] bg-white shadow-[0_24px_60px_rgba(0,0,0,.18)] border border-[#b16a6a]"
       >
         {/* Header */}
         <div className="flex items-center px-6 pt-6">
@@ -73,7 +72,7 @@ export default function StudentCategoryModal({
           <h3
             id="student-category-title"
             className="mx-auto text-lg font-bold"
-            style={{ color: TEXT_BLUE }}
+            style={{ color: TEXT_PRIMARY }}
           >
             Select Category
           </h3>
@@ -91,11 +90,11 @@ export default function StudentCategoryModal({
               onClick={() => onSelect?.("students")}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect?.("students")}
               className="flex flex-col items-center justify-center rounded-[24px] px-6 py-8 cursor-pointer transition-transform hover:-translate-y-[2px]"
-              style={{ backgroundColor: BLUE, boxShadow: "0 8px 20px rgba(43,120,198,.25)" }}
+              style={{ backgroundColor: PRIMARY, boxShadow: "0 8px 20px rgba(182,34,46,.25)" }}
             >
               <img src={studentIcon} alt="" className="h-12 w-12 object-contain" />
-              <div className="mt-3 text-sm font-semibold text-black">STUDENTS</div>
-              <div className="mt-2 text-2xl font-bold text-black">{counts.students}</div>
+              <div className="mt-3 text-sm font-semibold text-white">STUDENTS</div>
+              <div className="mt-2 text-2xl font-bold text-white">{counts.students}</div>
             </div>
 
             {/* NOT ATTENDING SCHOOL (≤25) */}
@@ -105,20 +104,19 @@ export default function StudentCategoryModal({
               onClick={() => onSelect?.("not_attending_25_below")}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect?.("not_attending_25_below")}
               className="flex flex-col items-center justify-center rounded-[24px] px-6 py-8 cursor-pointer transition-transform hover:-translate-y-[2px]"
-              style={{ backgroundColor: TILE_GRAY, boxShadow: "0 8px 20px rgba(16,24,40,.08)" }}
+              style={{ backgroundColor: PRIMARY, boxShadow: "0 8px 20px rgba(182,34,46,.25)" }}
             >
               <img
                 src={notAttendingIcon}
                 alt=""
-                className="h-12 w-12 object-contain opacity-80"
-                style={{ filter: "grayscale(1)" }}
+                className="h-12 w-12 object-contain opacity-90"
               />
-              <div className="mt-3 text-[12px] font-semibold text-center text-black" style={{ lineHeight: 1.1 }}>
+              <div className="mt-3 text-[12px] font-semibold text-center text-white" style={{ lineHeight: 1.1 }}>
                 NOT ATTENDING SCHOOL
                 <br />
                 (25 years old below)
               </div>
-              <div className="mt-2 text-2xl font-bold text-black">
+              <div className="mt-2 text-2xl font-bold text-white">
                 {counts.notAttending25Below}
               </div>
             </div>

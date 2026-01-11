@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 import Homepage from "./pages/Homepage";
 import TotalPopulation from "./pages/TotalPopulation";
 import Unauthorized from "./pages/Unauthorized";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
           {/* Root route - redirects based on user role */}
@@ -59,6 +61,18 @@ function App() {
           } />
           
           <Route path="/total-unemployed" element={
+            <ProtectedRoute>
+              <TotalPopulation />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/total-seniors" element={
+            <ProtectedRoute>
+              <TotalPopulation />
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/total-pwd" element={
             <ProtectedRoute>
               <TotalPopulation />
             </ProtectedRoute>

@@ -216,7 +216,7 @@ function Brgylist({ onBarangaySelect = null }) {
       <button
         onClick={handlePrev}
         disabled={startIndex === 0}
-        className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 bg-[#406882] hover:bg-[#062937] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 bg-[#6b3030] hover:bg-[#8b4040] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-[#3a2a2a] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Previous barangays"
       >
         <FaChevronLeft className="w-4 h-4" />
@@ -225,7 +225,7 @@ function Brgylist({ onBarangaySelect = null }) {
       <button
         onClick={handleNext}
         disabled={startIndex + visibleCount >= barangays.length}
-        className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 bg-[#406882] hover:bg-[#062937] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 bg-[#6b3030] hover:bg-[#8b4040] text-white rounded-full p-2 shadow-md transition-all duration-200 disabled:bg-[#3a2a2a] disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Next barangays"
       >
         <FaChevronRight className="w-4 h-4" />
@@ -240,24 +240,24 @@ function Brgylist({ onBarangaySelect = null }) {
         {visibleBarangays.map((barangay) => (
           <div
             key={barangay.id}
-            className="flex flex-col justify-between min-w-[180px] max-w-[180px] min-h-[290px] max-h-[290px] bg-white rounded-[20px] p-4 shadow-md"
+            className="flex flex-col justify-between min-w-[180px] max-w-[180px] min-h-[290px] max-h-[290px] bg-[#dc837d] rounded-[20px] p-4 shadow-md border border-[#3a2a2a]"
           >
             <div className="w-full h-[180px] bg-[#E3E3E3] rounded-[18px] overflow-hidden mb-3">
               <img src={getBarangayImage(barangay.name)} alt={barangay.name} className="w-full h-full object-cover" />
             </div>
 
             <div className="mb-2 min-h-[60px]">
-              <h6 className="text-[14px] font-bold text-black mb-1 break-words">
+              <h6 className="text-[14px] font-bold text-[#f5f0e8] mb-1 break-words">
                 {barangay.name}
               </h6>
-              <p className="text-[13px] text-black leading-tight">
+              <p className="text-[13px] text-[#d4c4a8] leading-tight">
                 A total population of {barangay.population}
               </p>
             </div>
 
             <div
               onClick={() => handleSeeDetails(barangay)}
-              className="mt-3 flex justify-between items-center bg-[#406882] hover:bg-[#062937] cursor-pointer rounded-full px-4 py-2 text-white text-[13px] font-semibold transition"
+              className="mt-3 flex justify-between items-center bg-[#b42234] hover:bg-[#8b4040] cursor-pointer rounded-full px-4 py-2 text-white text-[13px] font-semibold transition"
             >
               <span>See Details</span>
               <img src={arrowIcon} alt="arrow" className="w-[14px] h-[14px]" />

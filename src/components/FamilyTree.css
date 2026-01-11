@@ -1,12 +1,13 @@
 /* === Enhanced Family Tree Styles === */
 .enhanced-family-tree {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #1e1412 0%, #2a1a1a 100%);
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
   overflow-x: auto;
   min-height: 400px;
+  border: 1px solid #3a2a2a;
 }
 
 .tree-container {
@@ -39,36 +40,37 @@
 
 /* === Family Member Cards === */
 .family-member {
-  background: white;
+  background: #2a1a1a;
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   min-width: 120px;
-  border: 2px solid transparent;
+  border: 2px solid #3a2a2a;
   position: relative; /* Add position relative for absolute positioning of children */
+  color: #d4c4a8;
 }
 
 .family-member:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* === Special Node Styles === */
 .parents-node {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #6b3030 0%, #4a2020 100%);
+  color: #f5f0e8;
   min-width: 180px;
   padding: 20px;
 }
 
 .you-node.highlighted {
   background: transparent;
-  color: black;
+  color: #d4c4a8;
   border: none;
   transform: none;
   display: flex;
@@ -82,22 +84,22 @@
 }
 
 .spouse-node {
-  background: white;
-  color: black;
+  background: #2a1a1a;
+  color: #d4c4a8;
   z-index: 1; /* Make sure it appears above the line */
   margin-top: -15px; /* Adjust position to align with horizontal line */
 }
 
 .sibling-node {
-  background: white;
-  color: black;
+  background: #2a1a1a;
+  color: #d4c4a8;
   z-index: 1; /* Make sure it appears above the line */
   margin-top: -15px; /* Adjust position to align with horizontal line */
 }
 
 .child-node {
-  background: linear-gradient(135deg, #1dd1a1 0%, #10ac84 100%);
-  color: white;
+  background: linear-gradient(135deg, #8b4040 0%, #6b3030 100%);
+  color: #f5f0e8;
 }
 
 /* === Member Info === */
@@ -165,7 +167,7 @@
 
 /* === Connection Lines === */
 .connection-line {
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #6b3030, #8b4040);
   border-radius: 2px;
   position: relative;
 }
@@ -194,7 +196,7 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  background: #667eea;
+  background: #6b3030;
   border-radius: 50%;
   left: 50%;
   transform: translateX(-50%);
@@ -275,7 +277,7 @@
 /* === Legacy Styles (for backward compatibility) === */
 .tree a.person{
   border:0; background:transparent; padding:0; text-decoration:none;
-  color:#111; display:flex; flex-direction:column; align-items:center; gap:6px;
+  color:#d4c4a8; display:flex; flex-direction:column; align-items:center; gap:6px;
 }
 .tree a.person .label{ font-size:12px; line-height:1.1; text-align:center; }
 .tree .icon.parentIcon{ font-size:56px; color:#000; }

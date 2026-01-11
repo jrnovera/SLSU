@@ -10,7 +10,8 @@ import maleIcon from '../assets/icons/male.png';
 import femaleIcon from '../assets/icons/female.png';
 import studentIcon from '../assets/icons/student.png';
 import unemployedIcon from '../assets/icons/unemployed.png';
-import healthIcon from '../assets/icons/health.png';
+import seniorIcon from '../assets/icons/senior.png';
+import pwdIcon from '../assets/icons/pwd.png';
 
 // Modals
 import HealthCategoryModal from './HealthCategoryModal';
@@ -20,16 +21,17 @@ function CommunityStats() {
   const navigate = useNavigate();
 
   const [stats, setStats] = useState([
-    { icon: totalIcon, number: '0', label: 'Master List', link: '/total-population', category: null },
-    { icon: maleIcon, number: '0', label: 'Male', link: '/total-male', category: 'male' },
-    { icon: femaleIcon, number: '0', label: 'Female', link: '/total-female', category: 'female' },
-    { icon: studentIcon, number: '0', label: 'Students', link: '/total-students', category: 'students' },
-    { icon: unemployedIcon, number: '0', label: 'Unemployed', link: '/total-unemployed', category: 'unemployed' },
-    { icon: healthIcon, number: '0', label: 'Health Condition', link: '/total-health-condition', category: 'health' },
+    { icon: totalIcon, number: '0', label: 'MASTERLIST', link: '/total-population', category: null, className: 'row-span-2 h-full col-start-1' },
+    { icon: maleIcon, number: '0', label: 'MALE', link: '/total-male', category: 'male', className: 'col-start-2 row-start-1' },
+    { icon: femaleIcon, number: '0', label: 'FEMALE', link: '/total-female', category: 'female', className: 'col-start-3 row-start-1' },
+    { icon: seniorIcon, number: '0', label: 'SENIOR CITIZEN', link: '/total-seniors', category: 'seniors', className: 'col-start-4 row-start-1' },
+    { icon: studentIcon, number: '0', label: 'STUDENT', link: '/total-students', category: 'students', className: 'col-start-2 row-start-2' },
+    { icon: unemployedIcon, number: '0', label: 'UNEMPLOYED', link: '/total-unemployed', category: 'unemployed', className: 'col-start-3 row-start-2' },
+    { icon: pwdIcon, number: '0', label: 'PWD STATUS', link: '/total-pwd', category: 'pwd', className: 'col-start-4 row-start-2' },
   ]);
 
   const [healthModalOpen, setHealthModalOpen] = useState(false);
-  const [healthCounts, setHealthCounts] = useState({ withHealth: 0, noHealth: 0 });
+  const [healthCounts, setHealthCounts] = useState({ pwd: 0, notPwd: 0 });
 
   // NEW: Students modal state
   const [studentModalOpen, setStudentModalOpen] = useState(false);
@@ -38,22 +40,14 @@ function CommunityStats() {
     notAttending25Below: 0,
   });
 
-  // Health classifier
-  const classifyHealth = (person) => {
-    const val = person?.healthCondition;
-
-    // Check if using new format (Healthy/Not Healthy)
-    if (val === "Healthy") return 'no_health';
-    if (val === "Not Healthy") return 'with_health';
-
-    // Fallback to legacy healthCondition text values
-    const s = String(val ?? '').trim().toLowerCase();
-    if (!s || s === 'n/a' || s === 'na' || s === 'none' || s === 'healthy' ||
-        s === 'no health condition' || s === 'no health' || s === 'no condition' ||
-        s === 'good' || s === '-' || s === 'normal') {
-      return 'no_health';
-    }
-    return 'with_health';
+  // PWD checker
+  const isPWD = (person) => {
+    if (person?.isPWD === true || person?.pwd === true) return true;
+    const disability = String(person?.disability ?? '').trim().toLowerCase();
+    if (disability && disability !== 'none' && disability !== 'n/a' && disability !== 'na') return true;
+    const health = String(person?.healthCondition ?? '').toLowerCase();
+    if (health.includes('pwd')) return true;
+    return false;
   };
 
   // Unemployed checker
@@ -129,27 +123,29 @@ function CommunityStats() {
         // Unemployed = based on isEmployed field or occupation for legacy
         const unemployedCount = ipData.filter((p) => isUnemployed(p)).length;
 
-        // Health buckets
-        let withHealth = 0;
-        let noHealth = 0;
-        for (const p of ipData) {
-          const bucket = classifyHealth(p);
-          if (bucket === 'with_health') withHealth++;
-          else noHealth++;
-        }
-        const healthTotal = withHealth + noHealth;
+        // Seniors = age >= 60
+        const seniorCount = ipData.filter((p) => {
+          const age = getAge(p);
+          return age !== null && age >= 60;
+        }).length;
+
+        // PWD detection
+        const pwdCount = ipData.filter((p) => isPWD(p)).length;
+
+        const notPwdCount = ipData.filter((p) => !isPWD(p)).length;
 
         setStats([
-          { icon: totalIcon, number: String(totalCount), label: 'Master List', link: '/total-population', category: null },
-          { icon: maleIcon, number: String(maleCount), label: 'Male', link: '/total-male', category: 'male' },
-          { icon: femaleIcon, number: String(femaleCount), label: 'Female', link: '/total-female', category: 'female' },
-          { icon: studentIcon, number: String(studentsCount), label: 'Students', link: '/total-students', category: 'students' },
-          { icon: unemployedIcon, number: String(unemployedCount), label: 'Unemployed', link: '/total-unemployed', category: 'unemployed' },
-          { icon: healthIcon, number: String(healthTotal), label: 'Health Condition', link: '/total-health-condition', category: 'health' },
+          { icon: totalIcon, number: String(totalCount), label: 'MASTERLIST', link: '/total-population', category: null, className: 'row-span-2 h-full col-start-1' },
+          { icon: maleIcon, number: String(maleCount), label: 'MALE', link: '/total-male', category: 'male', className: 'col-start-2 row-start-1' },
+          { icon: femaleIcon, number: String(femaleCount), label: 'FEMALE', link: '/total-female', category: 'female', className: 'col-start-3 row-start-1' },
+          { icon: seniorIcon, number: String(seniorCount), label: 'SENIOR CITIZEN', link: '/total-seniors', category: 'seniors', className: 'col-start-4 row-start-1' },
+          { icon: studentIcon, number: String(studentsCount), label: 'STUDENT', link: '/total-students', category: 'students', className: 'col-start-2 row-start-2' },
+          { icon: unemployedIcon, number: String(unemployedCount), label: 'UNEMPLOYED', link: '/total-unemployed', category: 'unemployed', className: 'col-start-3 row-start-2' },
+          { icon: pwdIcon, number: String(pwdCount), label: 'PWD STATUS', link: '/total-pwd', category: 'health', className: 'col-start-4 row-start-2' },
         ]);
 
         setStudentCounts({ students: studentsCount, notAttending25Below });
-        setHealthCounts({ withHealth, noHealth });
+        setHealthCounts({ pwd: pwdCount, notPwd: notPwdCount });
       } catch (err) {
         console.error('Error fetching data:', err);
       }
@@ -159,10 +155,6 @@ function CommunityStats() {
   }, []);
 
   const handleCardClick = (stat) => {
-    if (stat.category === 'health') {
-      setHealthModalOpen(true);
-      return;
-    }
     if (stat.category === 'students') {
       setStudentModalOpen(true);
       return;
@@ -172,7 +164,11 @@ function CommunityStats() {
 
   const handleSelectHealthCategory = (value) => {
     setHealthModalOpen(false);
-    navigate(`/total-health-condition?category=${value}`); // 'with_health' | 'no_health'
+    if (value === 'pwd') {
+      navigate('/total-pwd?category=pwd');
+    } else if (value === 'not_pwd') {
+      navigate('/total-population?category=not_pwd');
+    }
   };
 
   const handleSelectStudentCategory = (value) => {
@@ -183,16 +179,19 @@ function CommunityStats() {
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            icon={stat.icon}
-            number={stat.number}
-            label={stat.label}
-            onClick={() => handleCardClick(stat)}
-          />
-        ))}
+      <div className="bg-transparent rounded-[20px] p-4">
+        <div className="grid grid-cols-4 grid-rows-2 gap-3">
+          {stats.map((stat, index) => (
+            <StatCard
+              key={index}
+              icon={stat.icon}
+              number={stat.number}
+              label={stat.label}
+              onClick={() => handleCardClick(stat)}
+              className={stat.className || ''}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Health modal */}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { FaArrowLeft } from "react-icons/fa";
 import { allBarangays } from "./Brgylist";
 import { serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -538,30 +539,41 @@ function IPFormModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex justify-center items-center overflow-hidden p-4">
-      <div className="relative bg-white w-full max-w-5xl rounded-lg shadow-lg p-6 overflow-y-auto max-h-[90vh]">
-        <button
-          onClick={() => onClose()}
-          className="absolute top-4 right-6 bg-[#406882] hover:bg-[#062937] text-white px-6 py-2 rounded-md font-semibold text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#406882]/50"
-          aria-label="Back"
-        >
-          ← Back
-        </button>
+  const sectionTitleCls =
+    "inline-flex px-4 py-1 rounded-md bg-[#993232] text-white font-semibold text-sm uppercase tracking-wide shadow";
+  const inputCls =
+    "rounded-full bg-[#d8d8d8] border border-[#5b5b5b] px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#b6222e]/50 text-sm";
+  const selectCls = inputCls + " appearance-none pr-9";
+  const radioBase = "radio-style rounded-full border-[#5b5b5b] bg-[#d8d8d8]";
+  const radioActive = "active-radio !bg-[#b6222e]/20 !border-[#b6222e] text-[#b6222e]";
 
-        <h2 className="text-xl font-semibold text-[#1a3b5d] pb-6">
-          {isEditing ? "Edit IP Information" : "Add New Indigenous Person"}
-        </h2>
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex justify-center items-center overflow-hidden p-4">
+      <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl border-4 border-white bg-white shadow-2xl p-6">
+        <div className="mb-6 flex items-center justify-between gap-3 bg-[#b6222e] text-white rounded-xl px-5 py-3 shadow border border-white">
+          <h2 className="text-2xl font-semibold tracking-wide">
+            {isEditing ? "Edit Community Member" : "Add New Community Member"}
+          </h2>
+          <button
+            onClick={() => onClose()}
+            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-full font-semibold text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+            aria-label="Back"
+          >
+            <FaArrowLeft className="text-sm" />
+            Go Back
+          </button>
+        </div>
 
         {/* noValidate stops silent HTML5 blocking; we validate in JS */}
         <form onSubmit={handleSubmit} noValidate className="space-y-5">
           {/* Name */}
+          <span className={sectionTitleCls}>Personal Information</span>
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Name:</label>
             <div className="col-span-9 grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleInputChange} required className="input-style" />
-              <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleInputChange} required className="input-style" />
-              <input type="text" name="middleName" placeholder="Middle Name" value={formData.middleName} onChange={handleInputChange} className="input-style" />
+              <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleInputChange} required className={inputCls} />
+              <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleInputChange} required className={inputCls} />
+              <input type="text" name="middleName" placeholder="Middle Name" value={formData.middleName} onChange={handleInputChange} className={inputCls} />
             </div>
           </div>
 
@@ -586,7 +598,7 @@ function IPFormModal({
                     {/* Custom upload button + hidden file input */}
                     
 
-                    <button type="button" onClick={() => setShowCameraModal(true)} style={{ fontSize: 13, lineHeight: 1, borderRadius: "0.375rem" }} className="rounded-md bg-[#6998ab] px-3 font-medium text-white hover:bg-[#194d62] h-8">
+                    <button type="button" onClick={() => setShowCameraModal(true)} style={{ fontSize: 13, lineHeight: 1, borderRadius: "999px" }} className="rounded-full bg-[#b6222e] px-3 font-medium text-white hover:bg-[#9f1c25] h-8 shadow-sm">
                       Use Camera
                     </button>
 
@@ -611,9 +623,9 @@ function IPFormModal({
           {/* Birth and Age */}
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Date of Birth:</label>
-            <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} required className="col-span-4 input-style" />
+            <input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} required className={`col-span-4 ${inputCls}`} />
             <label className="col-span-1 font-semibold text-gray-700 text-right">Age:</label>
-            <input type="number" name="age" placeholder="Age" value={formData.age} readOnly className="col-span-4 input-style bg-gray-100 cursor-not-allowed" />
+            <input type="number" name="age" placeholder="Age" value={formData.age} readOnly className={`col-span-4 ${inputCls} bg-gray-200 cursor-not-allowed`} />
           </div>
 
           {/* Gender */}
@@ -621,7 +633,7 @@ function IPFormModal({
             <label className="col-span-3 font-semibold text-gray-700">Gender:</label>
             <div className="col-span-9 flex gap-4">
               {["Male", "Female"].map((val) => (
-                <label key={val} className={`radio-style ${formData.gender === val ? "active-radio" : ""}`}>
+                <label key={val} className={`${radioBase} ${formData.gender === val ? radioActive : ""}`}>
                   <input type="radio" name="gender" className="mr-2" checked={formData.gender === val} onChange={() => handleRadioChange("gender", val)} />
                   <span className="ml-1">{val}</span>
                 </label>
@@ -634,7 +646,7 @@ function IPFormModal({
             <label className="col-span-3 font-semibold text-gray-700">Civil Status:</label>
             <div className="col-span-9 grid grid-cols-2 md:grid-cols-4 gap-2">
               {["Single", "Married", "Widowed", "Separated"].map((val) => (
-                <label key={val} className={`radio-style ${formData.civilStatus === val ? "active-radio" : ""}`}>
+                <label key={val} className={`${radioBase} ${formData.civilStatus === val ? radioActive : ""}`}>
                   <input type="radio" name="civilStatus" className="mr-2" checked={formData.civilStatus === val} onChange={() => handleRadioChange("civilStatus", val)} />
                   <span className="ml-1">{val}</span>
                 </label>
@@ -647,7 +659,7 @@ function IPFormModal({
             <label className="col-span-3 font-semibold text-gray-700">Student Status:</label>
             <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {["Student", "Not Student"].map((val) => (
-                <label key={val} className={`radio-style ${formData.isStudent === val ? "active-radio" : ""}`}>
+                <label key={val} className={`${radioBase} ${formData.isStudent === val ? radioActive : ""}`}>
                   <input
                     type="radio"
                     name="isStudent"
@@ -694,7 +706,7 @@ function IPFormModal({
                   name="schoolName"
                   value={formData.schoolName}
                   onChange={handleInputChange}
-                  className="col-span-9 input-style"
+                  className={`col-span-9 ${inputCls}`}
                   placeholder="Enter school name"
                 />
               </div>
@@ -709,7 +721,7 @@ function IPFormModal({
                 { label: "Employed", value: true },
                 { label: "Unemployed", value: false }
               ].map((option) => (
-                <label key={option.label} className={`radio-style ${formData.isEmployed === option.value ? "active-radio" : ""}`}>
+                <label key={option.label} className={`${radioBase} ${formData.isEmployed === option.value ? radioActive : ""}`}>
                   <input
                     type="radio"
                     name="isEmployed"
@@ -742,12 +754,175 @@ function IPFormModal({
                 value={formData.occupation}
                 onChange={handleInputChange}
                 placeholder="Enter occupation"
-                className="col-span-9 input-style"
+                className={`col-span-9 ${inputCls}`}
               />
             </div>
           )}
 
-          {/* Lineage */}
+          <span className={sectionTitleCls}>Address and Contact Information</span>
+          {/* Address */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Complete Address:</label>
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              className={`col-span-9 ${inputCls}`}
+            />
+          </div>
+
+          {/* Barangay / Zip / Municipality / Contact */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Barangay:</label>
+            <div className="col-span-4 relative">
+              <select name="barangay" value={formData.barangay} onChange={handleInputChange} required className={selectCls}>
+                <option value="">Select Barangay</option>
+                {allBarangays.map((brgy) => (
+                  <option key={brgy.id} value={brgy.name}>{brgy.name}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-600">
+                ▼
+              </div>
+            </div>
+            <label className="col-span-1 font-semibold text-gray-700 text-right">Zip Code:</label>
+            <input
+              type="text"
+              name="zipCode"
+              value={formData.zipCode || ""}
+              onChange={handleInputChange}
+              className={`col-span-4 ${inputCls}`}
+            />
+          </div>
+
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Municipality/City:</label>
+            <input type="text" name="municipality" value={formData.municipality} readOnly className={`col-span-4 ${inputCls} bg-gray-200`} />
+            <label className="col-span-1 font-semibold text-gray-700 text-right">Contact #:</label>
+            <input
+              type="tel"
+              name="contactNumber"
+              value={formData.contactNumber}
+              onChange={handleInputChange}
+              onBlur={handlePhoneBlur}
+              inputMode="tel"
+              autoComplete="tel"
+              pattern="^(\+63\d{10}|0\d{10})$"
+              title="Enter 11-digit PH number (09XXXXXXXXX) or +639XXXXXXXXX"
+              className={`col-span-4 ${inputCls}`}
+              required
+            />
+          </div>
+
+          <span className={sectionTitleCls}>Education and Occupation</span>
+
+          {/* Highest Education + School field shown when student */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">Highest Educational Attainment:</label>
+            <div className="col-span-9 relative">
+              <select
+                name="educationLevel"
+                value={formData.educationLevel}
+                onChange={handleInputChange}
+                className={selectCls}
+              >
+                <option value="">Select Education Level</option>
+                {["Elementary", "High School", "College", "Vocational"].map((val) => (
+                  <option key={val} value={val}>{val}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-600">
+                ▼
+              </div>
+            </div>
+          </div>
+
+          {formData.isStudent === "Student" && (
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <label className="col-span-3 font-semibold text-gray-700">If Student, Specify School:</label>
+              <input
+                type="text"
+                name="schoolName"
+                value={formData.schoolName}
+                onChange={handleInputChange}
+                className={`col-span-9 ${inputCls}`}
+                placeholder="Enter school name"
+              />
+            </div>
+          )}
+
+          {/* Health Status */}
+          <div className="grid grid-cols-12 gap-4 items-start">
+            <label className="col-span-3 font-semibold text-gray-700">Health Status:</label>
+            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { value: "Not PWD", label: "Not PWD" },
+                { value: "PWD", label: "PWD" }
+              ].map((option) => (
+                <label key={option.value} className={`${radioBase} ${formData.healthCondition === option.value ? radioActive : ""}`}>
+                  <input
+                    type="radio"
+                    name="healthCondition"
+                    className="mr-2"
+                    checked={formData.healthCondition === option.value}
+                    onChange={() => {
+                      handleRadioChange("healthCondition", option.value);
+                      if (option.value === "Not PWD") {
+                        setFormData(prev => ({
+                          ...prev,
+                          healthConditionDetails: ""
+                        }));
+                      }
+                    }}
+                  />
+                  <span className="ml-1">{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {formData.healthCondition === "Not Healthy" && (
+            <div className="grid grid-cols-12 gap-4 items-center">
+              <label className="col-span-3 font-semibold text-gray-700">Please specify Condition:</label>
+              <input
+                type="text"
+                name="healthConditionDetails"
+                value={formData.healthConditionDetails}
+                onChange={handleInputChange}
+                placeholder="Enter health condition"
+                className={`col-span-9 ${inputCls}`}
+              />
+            </div>
+          )}
+
+          {/* Household Members */}
+          <div className="grid grid-cols-12 gap-4 items-center">
+            <label className="col-span-3 font-semibold text-gray-700">No. of Household Members:</label>
+            <input
+              type="number"
+              name="householdMembers"
+              value={formData.householdMembers}
+              onChange={handleInputChange}
+              onKeyDown={(e) => {
+                if (e.key === '.' || e.key === '-' || e.key === 'e' || e.key === 'E') {
+                  e.preventDefault();
+                }
+              }}
+              onInput={(e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+              }}
+              min={0}
+              step={1}
+              className={`col-span-9 ${inputCls}`}
+              required={!isEditing}
+              placeholder="Enter whole number"
+            />
+          </div>
+
+          <span className={sectionTitleCls}>Cultural and Household Information</span>
+
+          {/* Tribe */}
           <div className="grid grid-cols-12 gap-4 items-center">
             <label className="col-span-3 font-semibold text-gray-700">Tribe:</label>
             <div className="col-span-9 relative">
@@ -759,10 +934,9 @@ function IPFormModal({
                 onChange={handleTribeSearch}
                 onFocus={() => formData.lineage && setShowTribeSuggestions(true)}
                 placeholder="Search for tribe..."
-                className="w-full input-style pr-10"
+                className={`w-full ${inputCls} pr-10`}
                 autoComplete="off"
               />
-              {/* Dropdown icon button */}
               <button
                 type="button"
                 onClick={() => {
@@ -770,11 +944,9 @@ function IPFormModal({
                   setShowTribeSuggestions(!showTribeSuggestions);
                   tribeInputRef.current?.focus();
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-800"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+                ▼
               </button>
               {showTribeSuggestions && tribeSuggestions.length > 0 && (
                 <div 
@@ -795,145 +967,34 @@ function IPFormModal({
             </div>
           </div>
 
-          {/* Barangay */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Barangay:</label>
-            <select name="barangay" value={formData.barangay} onChange={handleInputChange} required className="col-span-9 input-style">
-              <option value="">Select Barangay</option>
-              {allBarangays.map((brgy) => (
-                <option key={brgy.id} value={brgy.name}>{brgy.name}</option>
-              ))}
-            </select>
-          </div>
+          {/* Contact Number (already styled) */}
 
-          {/* Birthplace */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Birthplace:</label>
-            <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="col-span-9 input-style" />
-          </div>
-
-          {/* Health Status */}
-          <div className="grid grid-cols-12 gap-4 items-start">
-            <label className="col-span-3 font-semibold text-gray-700">Health Status:</label>
-            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { value: "Healthy", label: "No known medical condition" },
-                { value: "Not Healthy", label: "With medical condition" }
-              ].map((option) => (
-                <label key={option.value} className={`radio-style ${formData.healthCondition === option.value ? "active-radio" : ""}`}>
-                  <input
-                    type="radio"
-                    name="healthCondition"
-                    className="mr-2"
-                    checked={formData.healthCondition === option.value}
-                    onChange={() => {
-                      handleRadioChange("healthCondition", option.value);
-                      // Clear condition details if "Healthy" is selected
-                      if (option.value === "Healthy") {
-                        setFormData(prev => ({
-                          ...prev,
-                          healthConditionDetails: ""
-                        }));
-                      }
-                    }}
-                  />
-                  <span className="ml-1">{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Health Condition Details - Only show if Not Healthy */}
-          {formData.healthCondition === "Not Healthy" && (
-            <div className="grid grid-cols-12 gap-4 items-center">
-              <label className="col-span-3 font-semibold text-gray-700">Please specify Condition:</label>
-              <input
-                type="text"
-                name="healthConditionDetails"
-                value={formData.healthConditionDetails}
-                onChange={handleInputChange}
-                placeholder="Enter health condition"
-                className="col-span-9 input-style w-full"
-              />
-            </div>
-          )}
-
-          {/* Household Members (required only on Add to avoid blocking legacy edits) */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">No. of Household Members:</label>
-            <input
-              type="number"
-              name="householdMembers"
-              value={formData.householdMembers}
-              onChange={handleInputChange}
-              onKeyDown={(e) => {
-                // Prevent decimal point, minus sign, and 'e' (scientific notation)
-                if (e.key === '.' || e.key === '-' || e.key === 'e' || e.key === 'E') {
-                  e.preventDefault();
-                }
-              }}
-              onInput={(e) => {
-                // Remove any decimal values if entered
-                e.target.value = e.target.value.replace(/[^0-9]/g, '');
-              }}
-              min={0}
-              step={1}
-              className="col-span-9 input-style"
-              required={!isEditing}
-              placeholder="Enter whole number"
-            />
-          </div>
-
-          {/* Contact Number */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Contact Number:</label>
-            <input
-              type="tel"
-              name="contactNumber"
-              value={formData.contactNumber}
-              onChange={handleInputChange}
-              onBlur={handlePhoneBlur}
-              inputMode="tel"
-              autoComplete="tel"
-              pattern="^(\+63\d{10}|0\d{10})$"
-              title="Enter 11-digit PH number (09XXXXXXXXX) or +639XXXXXXXXX"
-              className="col-span-9 input-style"
-              required
-            />
-          </div>
-
-          {/* Municipality + Province */}
-          <div className="grid grid-cols-12 gap-4 items-center">
-            <label className="col-span-3 font-semibold text-gray-700">Municipality:</label>
-            <input type="text" name="municipality" value={formData.municipality} readOnly className="col-span-4 input-style" />
-            <label className="col-span-1 font-semibold text-gray-700 text-right">Province:</label>
-            <input type="text" name="province" value={formData.province} readOnly className="col-span-4 input-style" />
-          </div>
+          {/* Municipality + Province already above */}
 
           {/* Family Tree */}
           <div className="grid grid-cols-12 gap-4 items-start">
-            <label className="col-span-3 font-semibold text-gray-700">Family Tree:</label>
-            <div className="col-span-9 grid grid-cols-2 md:grid-cols-3 gap-2">
-              <input type="text" placeholder="father" value={formData.familyTree.father} onChange={(e) => handleFamilyChange("father", e.target.value)} className="input-style" />
-              <input type="text" placeholder="mother" value={formData.familyTree.mother} onChange={(e) => handleFamilyChange("mother", e.target.value)} className="input-style" />
-              <input type="text" placeholder="siblings (comma-separated)" value={formData.familyTree.siblings} onChange={(e) => handleFamilyChange("siblings", e.target.value)} className="input-style" />
-              <input type="text" placeholder="spouse" value={formData.familyTree.spouse} onChange={(e) => handleFamilyChange("spouse", e.target.value)} className="input-style" />
-              <input type="text" placeholder="children (comma-separated)" value={formData.familyTree.children} onChange={(e) => handleFamilyChange("children", e.target.value)} className="input-style" />
+            <label className="col-span-3 font-semibold text-gray-700">Family Information:</label>
+            <div className="col-span-9 grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input type="text" placeholder="Father's Complete Name" value={formData.familyTree.father} onChange={(e) => handleFamilyChange("father", e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Mother's Complete Name" value={formData.familyTree.mother} onChange={(e) => handleFamilyChange("mother", e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Siblings (comma-separated)" value={formData.familyTree.siblings} onChange={(e) => handleFamilyChange("siblings", e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Children (comma-separated)" value={formData.familyTree.children} onChange={(e) => handleFamilyChange("children", e.target.value)} className={inputCls} />
+              <input type="text" placeholder="Spouse" value={formData.familyTree.spouse} onChange={(e) => handleFamilyChange("spouse", e.target.value)} className={inputCls} />
             </div>
           </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 mt-6">
-            <button type="button" onClick={() => onClose()} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            <button type="button" onClick={() => onClose()} className="px-5 py-2 rounded-full bg-white text-[#b6222e] border border-[#b6222e] hover:bg-[#f5d2d0] font-semibold shadow-sm">
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className={`px-4 py-2 rounded text-white ${isSaving ? "bg-[#1a3b5d]/60 cursor-not-allowed" : "bg-[#1a3b5d] hover:bg-[#16304a]"}`}
+              className={`px-6 py-2 rounded-full text-white font-semibold shadow-sm ${isSaving ? "bg-[#b6222e]/60 cursor-not-allowed" : "bg-[#b6222e] hover:bg-[#9f1c25]"}`}
               aria-busy={isSaving}
             >
-              {isSaving ? (isEditing ? "Updating…" : "Adding…") : (isEditing ? "Update" : "Add")}
+              {isSaving ? (isEditing ? "Updating…" : "Adding…") : (isEditing ? "Update" : "Save")}
             </button>
           </div>
         </form>

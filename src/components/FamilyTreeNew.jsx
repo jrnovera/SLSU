@@ -27,6 +27,15 @@ export default function FamilyTreeNew({
   siblings = [],
   children = [],
 }) {
+  // local icons map (used below)
+  const icons = {
+    parent: "👨‍👩‍👧‍👦",
+    person: "👤",
+    you: "🔴",
+    spouse: "👤",
+    child: "👶",
+  };
+
   // Tribe stats state
   const [tribeCounts, setTribeCounts] = useState({});
   const [tribeTotal, setTribeTotal] = useState(0);

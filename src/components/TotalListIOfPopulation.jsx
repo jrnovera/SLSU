@@ -38,6 +38,18 @@ const hasHealthCondition = (person) => {
   }
   return true;
 };
+const isPWD = (person) => {
+  if (person?.isPWD === true || person?.pwd === true) return true;
+  const disability = normalize(person?.disability);
+  if (disability && !['none', 'n/a', 'na', '-'].includes(disability)) return true;
+  const health = normalize(person?.healthCondition);
+  if (health.includes('pwd')) return true;
+  return false;
+};
+const isSenior = (person) => {
+  const age = getAge(person);
+  return age !== null && age >= 60;
+};
 const isUnemployed = (person) => {
   // Check new isEmployed field first
   if (person && person.isEmployed !== undefined && person.isEmployed !== null && person.isEmployed !== "") {
@@ -216,6 +228,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
     else if (category === 'students' || category === 'student') title = 'Total Students';
     else if (category === 'not_attending_25_below') title = 'Not Attending School (≤25)';
     else if (category === 'unemployed') title = 'Total Unemployed';
+    else if (category === 'seniors') title = 'Total Senior Citizens';
+    else if (category === 'pwd') title = 'Total PWD';
     else if (category === 'with_health') title = 'With Health Condition';
     else if (category === 'no_health') title = 'No Health Condition';
     setPageTitle(title);
@@ -242,6 +256,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           return age !== null && age <= 25 && p.isStudent === "Not Student";
         });
       } else if (category === 'unemployed') filtered = filtered.filter((p) => isUnemployed(p));
+      else if (category === 'seniors') filtered = filtered.filter((p) => isSenior(p));
+      else if (category === 'pwd') filtered = filtered.filter((p) => isPWD(p));
       else if (category === 'with_health') filtered = filtered.filter((p) => hasHealthCondition(p));
       else if (category === 'no_health') filtered = filtered.filter((p) => !hasHealthCondition(p));
     }
@@ -461,8 +477,8 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
   const headerTitle = hasSearch ? `Results for "${searchTerm.trim()}"` : pageTitle;
 
   // Excel-ish cell classes (thicker borders)
-  const thCls = "px-3 py-2 text-[13px] font-semibold italic text-slate-700 bg-slate-100 border border-slate-500";
-  const tdCls = "px-3 py-2 text-[13px] align-middle border border-slate-500";
+   const thCls = "px-3 py-2 text-[13px] font-semibold italic text-slate-700 bg-[#f1dede] border border-[#b16a6a]";
+  const tdCls = "px-3 py-2 text-[13px] align-middle border border-[#b16a6a]";
   
   // Column width styles
   const colWidths = {
@@ -529,11 +545,11 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
   };
 
   return (
-    <div className="mx-auto mt-28 w-full max-w-[95%] px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto mt-28 w-full max-w-[95%] px-4 sm:px-6 lg:px-8 bg-white">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="mb-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+        className="mb-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wide text-white bg-[#b6222e] hover:bg-[#9f1c25] transition-colors shadow-sm"
       >
         <FaArrowLeft className="text-sm" />
         Back
@@ -554,7 +570,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           <button
             onClick={handleAdd}
             disabled={isProcessing}
-            className="flex items-center justify-center gap-2 rounded-full bg-[#2c526b] px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-gray-400 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-full bg-[#b6222e] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9f1c25] disabled:opacity-50"
           >
             <FaPlus size={14} />
             Add New
@@ -647,21 +663,21 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
           {(searchTerm || selectedBarangay !== 'All Barangay' || selectedFilter !== 'Show All') && (
             <button
               onClick={clearFilters}
-              className="rounded-full bg-[#2b78c6] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-[#1a5c9e]"
+              className="rounded-full bg-[#b6222e] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#9f1c25]"
             >Reset</button>
           )}
         </div>
       </div>
 
       {/* Excel-like grid */}
-      <div className="overflow-hidden rounded-xl border-2 border-slate-600 bg-gray-100/60 shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-[#b16a6a] bg-[#f9e9e9] shadow-sm">
         <div className="overflow-x-auto">
           <div
             className="overflow-y-auto"
             style={{ maxHeight: TABLE_SCROLL_HEIGHT }}
           >
             <table className="w-full table-fixed border-collapse text-slate-900" style={{ minWidth: '1500px' }}>
-              <thead className="sticky top-0 z-10 bg-[#e9ecef]">
+              <thead className="sticky top-0 z-10 bg-[#f1dede]">
               <tr>
                 <th className={thCls} style={colWidths.photo}>Photo</th>
                 <th className={thCls} style={colWidths.name}>Name</th>
@@ -683,7 +699,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
             <tbody>
               {loading ? (
                 [...Array(12)].map((_, i) => (
-                  <tr key={`skeleton-${i}`} className="odd:bg-white even:bg-slate-50">
+                  <tr key={`skeleton-${i}`} className="odd:bg-[#fdf4f4] even:bg-[#f7e9e9]">
                     {Array.from({ length: 11 }).map((__, j) => (
                       <td key={j} className={tdCls}>
                         <div className="h-3 w-full max-w-[160px] rounded bg-slate-200" />
@@ -701,7 +717,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                 filteredData.map((person, idx) => (
                   <tr 
                     key={person.id} 
-                    className={`cursor-pointer ${selectedForAction?.id === person.id ? 'bg-blue-100 !important' : 'odd:bg-white even:bg-slate-50 hover:bg-slate-100'}`}
+                    className={`cursor-pointer ${selectedForAction?.id === person.id ? 'bg-blue-100 !important' : 'odd:bg-[#fdf4f4] even:bg-[#f7e9e9] hover:bg-[#f2dede]'}`}
                     onClick={() => setSelectedForAction(person)}
                   >
                     <td className={tdCls} style={colWidths.photo}>
@@ -739,7 +755,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                           e.stopPropagation();
                           openModal(person);
                         }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#e7d1d1] text-[#b6222e] hover:bg-[#dec1c1] transition-colors"
                         title="View Profile"
                       >
                         <FaEye size={14} />
@@ -751,7 +767,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                           e.stopPropagation();
                           handleUpdate(person);
                         }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 hover:bg-yellow-200 transition-colors"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#f5e0b3] text-[#b67b22] hover:bg-[#efd59b] transition-colors"
                         title="Edit"
                         disabled={isProcessing}
                       >
@@ -764,7 +780,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                           e.stopPropagation();
                           requestDelete(person);
                         }}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#f3d6d9] text-[#b6222e] hover:bg-[#e8c2c6] transition-colors"
                         title="Delete"
                         disabled={isProcessing}
                       >
@@ -775,7 +791,7 @@ function TotalListIOfPopulation({ populationData = [], category = null, onDataCh
                 ))
               ) : (
                 <tr>
-                  <td colSpan={14} className={`${tdCls} text-center py-10 bg-white`}>
+                  <td colSpan={14} className={`${tdCls} text-center py-10 bg-[#f9e9e9]`}>
                     No data found — try adjusting your search or filters.
                   </td>
                 </tr>

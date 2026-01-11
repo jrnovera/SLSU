@@ -199,10 +199,10 @@ function SearchBar() {
   return (
     <div className="relative w-full">
       {/* Input */}
-      <div className="flex items-center bg-white px-4 py-2 rounded-full shadow-md w-full">
+      <div className="flex items-center bg-[#fdfdfd] px-4 py-2 rounded-full shadow-md w-full border border-[#3a2a2a]">
         <input
           type="text"
-          className="flex-1 outline-none bg-transparent text-sm placeholder-gray-400"
+          className="flex-1 outline-none bg-transparent text-sm placeholder-[#6b5b4f] text-[#f5f0e8]"
           placeholder="Search name, tribe, barangay, or age…"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -216,7 +216,7 @@ function SearchBar() {
 
       {/* Loading */}
       {loading && (
-        <div className="absolute left-0 mt-2 w-full bg-white text-sm text-gray-500 px-4 py-2 shadow rounded-md z-10">
+        <div className="absolute left-0 mt-2 w-full bg-[#2a1a1a] text-sm text-[#d4c4a8] px-4 py-2 shadow rounded-md z-10 border border-[#3a2a2a]">
           Loading…
         </div>
       )}
@@ -226,11 +226,11 @@ function SearchBar() {
         <ul
           id="search-suggestions"
           ref={listRef}
-          className="absolute left-0 mt-2 w-full bg-white shadow-md rounded-md z-10 overflow-hidden"
+          className="absolute left-0 mt-2 w-full bg-[#2a1a1a] shadow-md rounded-md z-10 overflow-hidden border border-[#3a2a2a]"
           role="listbox"
         >
           {suggestions.length === 0 ? (
-            <li className="px-4 py-2 text-sm text-gray-500">No matches</li>
+            <li className="px-4 py-2 text-sm text-[#d4c4a8]">No matches</li>
           ) : (
             suggestions.map((person, idx) => {
               const fullName = `${person.firstName || ''} ${person.lastName || ''}`.trim();
@@ -241,8 +241,8 @@ function SearchBar() {
                   aria-selected={idx === activeIndex}
                   onMouseEnter={() => setActiveIndex(idx)}
                   onClick={() => openModalWithFullDoc(person)}
-                  className={`px-0.5- py-2 cursor-pointer text-sm flex items-center gap-3 ${
-                    idx === activeIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
+                  className={`px-0.5- py-2 cursor-pointer text-sm flex items-center gap-3 text-[#d4c4a8] ${
+                    idx === activeIndex ? 'bg-[#3a2a2a]' : 'hover:bg-[#3a2a2a]'
                   }`}
                 >
                   {/* Icon */}
@@ -257,7 +257,7 @@ function SearchBar() {
                     <div className="font-medium truncate">
                       {highlight(fullName || 'Unnamed')}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">
+                    <div className="text-xs text-[#d4c4a8]/70 truncate">
                       Tribe: {highlight(person.lineage || '—')} · Barangay: {highlight(person.barangay || '—')} · Age: {person.age ?? '—'}
                     </div>
                   </div>

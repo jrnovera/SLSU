@@ -30,11 +30,11 @@ function AboutContent({ activePage }) {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center px-4 py-5 lg:py-20">
-      <div className="rounded-[30px] px-8 md:px-12 py-10 max-w-4xl w-full">
+    <div className="about-content-container relative flex flex-col items-center justify-center px-4 py-5 lg:py-20">
+      <div className="about-content px-6 md:px-10 py-8 max-w-4xl w-full text-center">
         {/* Stylized Header */}
-        <div className="relative text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#123645] inline-block border-b-4 border-[#219EBC] px-6 pb-2 rounded-md">
+        <div className="relative text-center bg-[#dc837d] rounded-2xl mb-8">
+          <h2 className="about-content-title inline-block px-4 py-3 text-2xl md:text-3xl font-black uppercase tracking-wide">
             {activePage === 'who-we-are'
               ? 'Who We Are'
               : activePage === 'mission'
@@ -54,7 +54,7 @@ function AboutContent({ activePage }) {
         </div>
 
         {/* Page Content */}
-        <div className="text-center text-[#333] text-lg md:text-xl leading-relaxed font-medium">
+        <div className="about-content-text text-center text-[#1f1f1f] text-lg md:text-xl leading-relaxed font-medium">
           {renderContent()}
         </div>
       </div>

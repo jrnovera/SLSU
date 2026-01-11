@@ -138,11 +138,11 @@ function RecentActivities() {
   const avatarSrc = latest?.photoURL || latest?.image || profileImg;
 
   return (
-    <div className="bg-[#f0eee2] rounded-[30px] p-2 space-y-5">
+    <div className="bg-[#2596be rounded-[30px] p-2 space-y-5">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-bold text-[#062937]">Latest Data Entry</h3>
-        <p className="text-sm text-[#062937] -mt-1">recent demographic record</p>
+        <h3 className="text-lg font-bold text-[#fff]">Latest Data Entry</h3>
+        <p className="text-sm text-[#fff] -mt-1">recent demographic record</p>
       </div>
 
       {/* Content Row */}
@@ -159,13 +159,13 @@ function RecentActivities() {
         />
         <div className="space-y-1">
           {loading ? (
-            <p className="font-semibold text-black">Loading…</p>
+            <p className="font-semibold text-[#fff]">Loading…</p>
           ) : latest ? (
             <>
-              <p className="font-semibold text-[#062937]">
-                {fullName || "Unknown"} <span className="text-gray-600">added</span>
+              <p className="font-semibold text-[#fff]">
+                {fullName || "Unknown"} <span className="text-[#fff]">added</span>
               </p>
-              <p className="text-sm text-[#062937]">
+              <p className="text-sm text-[#fff]">
                 {displayAge ? `Age ${displayAge}, ` : ""}
                 {gender ? `${gender}, ` : ""}
                 {barangay ? `Brgy. ${barangay}, ` : ""}
@@ -174,10 +174,10 @@ function RecentActivities() {
             </>
           ) : (
             <>
-              <p className="font-semibold text-black">
-                No recent entries <span className="text-gray-600">yet</span>
+              <p className="font-semibold text-[#fff]">
+                No recent entries <span className="text-[#fff]">yet</span>
               </p>
-              <p className="text-sm text-[#062937]">Add a new Indigenous Person to see it here.</p>
+              <p className="text-sm text-[#fff]">Add a new Indigenous Person to see it here.</p>
             </>
           )}
         </div>
@@ -190,7 +190,7 @@ function RecentActivities() {
           disabled={!latest}
           onClick={() => latest && setViewOpen(true)}
           className={`text-sm font-semibold underline-offset-4 ${
-            latest ? "text-[#062937] hover:underline" : "text-gray-400 cursor-not-allowed"
+            latest ? "text-[#fff] hover:underline hover:text-[#fff]" : "text-[#fff] cursor-not-allowed"
           }`}
         >
           View Entry

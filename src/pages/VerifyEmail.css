@@ -1,0 +1,173 @@
+.verify-email-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1e1412 0%, #2a1a1a 100%);
+  padding: 20px;
+}
+
+.verify-email-card {
+  background: #2a1a1a;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+  width: 100%;
+  max-width: 500px;
+  padding: 40px;
+  border: 1px solid #3a2a2a;
+}
+
+.verify-email-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.likha-brand {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #d4c4a8;
+  margin: 0 0 10px 0;
+}
+
+.verify-email-header h2 {
+  color: #f5f0e8;
+  font-size: 1.5rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.verify-email-content {
+  text-align: center;
+}
+
+.alert-icon {
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.alert-icon svg {
+  color: #d4c4a8;
+}
+
+.verify-message {
+  font-size: 1.1rem;
+  color: #d4c4a8;
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.verify-email-address {
+  font-size: 0.95rem;
+  color: #d4c4a8;
+  margin: 15px 0;
+  padding: 15px;
+  background: #1e1412;
+  border-radius: 8px;
+  border: 1px solid #3a2a2a;
+}
+
+.verify-email-address strong {
+  color: #f5f0e8;
+  word-break: break-all;
+}
+
+.verify-instructions {
+  font-size: 0.9rem;
+  color: #d4c4a8;
+  margin: 20px 0;
+  line-height: 1.5;
+}
+
+.verify-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.verify-button {
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.verify-button.primary {
+  background: linear-gradient(135deg, #6b3030 0%, #4a2020 100%);
+  color: #f5f0e8;
+}
+
+.verify-button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #8b4040 0%, #6b3030 100%);
+}
+
+.verify-button.secondary {
+  background: #1e1412;
+  color: #d4c4a8;
+  border: 2px solid #6b3030;
+}
+
+.verify-button.secondary:hover {
+  background: #3a2a2a;
+}
+
+.verify-button.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.verify-button.tertiary {
+  background: #3a2a2a;
+  color: #d4c4a8;
+}
+
+.verify-button.tertiary:hover {
+  background: #4a2020;
+}
+
+.success-message {
+  background-color: #1a3a1a;
+  color: #81c784;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 1px solid #2e5a2e;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  background-color: #4a2020;
+  color: #ff8a80;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 1px solid #6b3030;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .verify-email-card {
+    padding: 30px 20px;
+  }
+
+  .likha-brand {
+    font-size: 2rem;
+  }
+
+  .verify-email-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .alert-icon svg {
+    width: 48px;
+    height: 48px;
+  }
+}

@@ -5,6 +5,8 @@ import { getUserRole } from '../firebase/config';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { RECAPTCHA_SITE_KEY } from '../config/recaptcha';
 import './Login.css';
+import logoIcon from '../assets/icons/logoIcon.png';
+import logoPNG from '../assets/icons/logoPNG.png';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -74,6 +76,15 @@ function Login() {
     e.preventDefault();
     setError('');
     
+    // Basic validation
+    if (!email.trim()) {
+      return setError("Email is required");
+    }
+    
+    if (!password.trim()) {
+      return setError("Password is required");
+    }
+    
     // Validate reCAPTCHA
     if (!recaptchaToken) {
       return setError("Please complete the reCAPTCHA verification");
@@ -85,6 +96,13 @@ function Login() {
     
     try {
       const userCredential = await login(email, password);
+      
+      // Check if email is verified
+      if (!userCredential.user.emailVerified) {
+        setError('Please verify your email before logging in. Check your inbox for the verification link.');
+        setLoading(false);
+        return;
+      }
       
       // Check if the user is IPMR (admin) and redirect accordingly
       const userRole = await getUserRole(userCredential.user.uid);
@@ -104,9 +122,10 @@ function Login() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.message);
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        setError('Invalid email or password');
+      if (error.code === 'auth/wrong-password') {
+        setError('Incorrect password');
+      } else if (error.code === 'auth/user-not-found') {
+        setError('Email not found');
       } else if (error.code === 'auth/too-many-requests') {
         setError('Too many failed login attempts. Please try again later.');
       } else {
@@ -121,7 +140,10 @@ function Login() {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>Bantay Lahi</h1>
+         <div className="likha-nav-brand text-[#800000] inline-flex flex-row items-center gap-1 whitespace-nowrap">
+                    
+                     <img src={logoPNG} alt="LIKHA Logo" className="h-20 inline-block object-contain" />
+                   </div>
           <h2>Login</h2>
         </div>
         
@@ -217,7 +239,7 @@ function Login() {
             <Link to="/forgot-password" className="forgot-password-link">Forgot your password?</Link>
           </p>
           <p>
-            Don't have an account? <Link to="/signup" className="signup-link">Sign up</Link>
+            Don't have an account? <Link to="/signup" className="signup-2">Sign up</Link>
           </p>
         </div>
       </div>

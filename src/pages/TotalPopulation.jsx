@@ -61,7 +61,7 @@ function TotalPopulation() {
   }, []);
 
   return (
-    <>
+    <div className="bg-white min-h-screen">
       <Navbar />
       {loading ? (
         <div className="py-12 text-center text-sm text-gray-500">Loading…</div>
@@ -71,7 +71,7 @@ function TotalPopulation() {
           category={categoryParam}
         />
       )}
-    </>
+    </div>
   );
 }
 

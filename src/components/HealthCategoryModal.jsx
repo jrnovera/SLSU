@@ -1,19 +1,20 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import healthIcon from "../assets/icons/healthcondition.png";
 import noHealthIcon from "../assets/icons/nohealthcondition.png";
 import returnIcon from "../assets/icons/return.png"; // back icon
 
-/** Figma tokens */
-const BLUE = "#7cafca";      // primary blue
-const TILE_GRAY = "#c6c6c6"; // muted right tile bg
-const TEXT_BLUE = "#194d62";
+/** Theme tokens (maroon) */
+const PRIMARY = "#b6222e";
+const TILE_GRAY = "#f1e4e4";
+const TEXT_PRIMARY = "#1a0e0e";
 
 export default function HealthCategoryModal({
   open,
   onClose,
-  counts = { withHealth: 0, noHealth: 0 },
+  counts = { pwd: 0, notPwd: 0 },
   onSelect,
 }) {
+  const [selected, setSelected] = useState(null);
   const scrollYRef = useRef(0);
 
   // ESC to close + scroll lock
@@ -69,7 +70,7 @@ export default function HealthCategoryModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="health-category-title"
-        className="relative w-[600px] rounded-[32px] bg-white shadow-[0_24px_60px_rgba(0,0,0,.18)]"
+        className="relative w-[600px] rounded-[32px] bg-white shadow-[0_24px_60px_rgba(0,0,0,.18)] border border-[#b16a6a]"
       >
         {/* Header */}
         <div className="flex items-center px-6 pt-6">
@@ -77,12 +78,12 @@ export default function HealthCategoryModal({
             <img src={returnIcon} alt="Back" className="h-6 w-6 object-contain" />
           </button>
 
-        <h3
+          <h3
             id="health-category-title"
             className="mx-auto text-lg font-bold"
-            style={{ color: TEXT_BLUE }}
+            style={{ color: TEXT_PRIMARY }}
           >
-            Select Category
+            Select Health Status
           </h3>
 
           <span className="w-6" /> {/* spacer */}
@@ -90,48 +91,32 @@ export default function HealthCategoryModal({
 
         {/* Body */}
         <div className="px-8 pb-8 pt-6">
-          <div className="grid grid-cols-2 gap-6">
-            {/* WITH HEALTH CONDITION */}
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelect?.("with_health")}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect?.("with_health")}
-              className="flex flex-col items-center justify-center rounded-[24px] px-6 py-8 cursor-pointer transition-transform hover:-translate-y-[2px]"
-              style={{
-                backgroundColor: BLUE,
-                boxShadow: "0 8px 20px rgba(43,120,198,.25)",
-              }}
-            >
-              <img src={healthIcon} alt="" className="h-12 w-12 object-contain" />
-              <div className="mt-3 text-sm font-semibold text-black">
-                With Health Condition
+          <div className="space-y-3">
+            <label className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-[#b6222e] bg-white shadow-sm cursor-pointer hover:bg-[#f9e6e5]">
+              <input
+                type="checkbox"
+                checked={selected === "pwd"}
+                onChange={() => setSelected((prev) => (prev === "pwd" ? null : "pwd"))}
+                className="h-5 w-5 accent-[#b6222e] cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold text-[#1a0e0e]">PWD</span>
+                <span className="text-sm text-[#5a2b2b]">Total: {counts.pwd}</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-black">
-                {counts.withHealth}
-              </div>
-            </div>
+            </label>
 
-            {/* NO HEALTH CONDITION */}
-            <div
-              role="button"
-              tabIndex={0}
-              onClick={() => onSelect?.("no_health")}
-              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onSelect?.("no_health")}
-              className="flex flex-col items-center justify-center rounded-[24px] px-6 py-8 cursor-pointer transition-transform hover:-translate-y-[2px]"
-              style={{
-                backgroundColor: TILE_GRAY,
-                boxShadow: "0 8px 20px rgba(16,24,40,.08)",
-              }}
-            >
-              <img src={noHealthIcon} alt="" className="h-12 w-12 object-contain opacity-80" />
-              <div className="mt-3 text-sm font-semibold text-black">
-                No Health Condition
+            <label className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-[#b6222e] bg-white shadow-sm cursor-pointer hover:bg-[#f9e6e5]">
+              <input
+                type="checkbox"
+                checked={selected === "not_pwd"}
+                onChange={() => setSelected((prev) => (prev === "not_pwd" ? null : "not_pwd"))}
+                className="h-5 w-5 accent-[#b6222e] cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="font-semibold text-[#1a0e0e]">Not PWD</span>
+                <span className="text-sm text-[#5a2b2b]">Total: {counts.notPwd}</span>
               </div>
-              <div className="mt-2 text-2xl font-bold text-black">
-                {counts.noHealth}
-              </div>
-            </div>
+            </label>
           </div>
         </div>
       </div>

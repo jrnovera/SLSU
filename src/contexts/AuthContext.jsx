@@ -6,7 +6,9 @@ import {
   onAuthStateChanged,
   updateProfile,
   setPersistence,
-  browserLocalPersistence
+  browserLocalPersistence,
+  sendEmailVerification,
+  reload
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
@@ -31,6 +33,9 @@ export function AuthProvider({ children }) {
       
       // Update profile with display name
       await updateProfile(userCredential.user, { displayName });
+      
+      // Send email verification
+      await sendEmailVerification(userCredential.user);
       
       // Create user document in Firestore with specified role (or default to regular user)
       await setDoc(doc(db, "users", userCredential.user.uid), {
@@ -64,6 +69,23 @@ export function AuthProvider({ children }) {
     // We'll handle this in the components by setting autocomplete="off"
     
     return signOut(auth);
+  }
+
+  // Resend verification email
+  async function resendVerificationEmail() {
+    if (currentUser && !currentUser.emailVerified) {
+      await sendEmailVerification(currentUser);
+    }
+  }
+
+  // Reload current user to pick up latest emailVerified status
+  async function refreshUser() {
+    if (auth.currentUser) {
+      await reload(auth.currentUser);
+      const role = await getUserRole(auth.currentUser.uid);
+      setCurrentUser(auth.currentUser);
+      setUserRole(role);
+    }
   }
 
   // Get user role from Firestore
@@ -164,6 +186,8 @@ export function AuthProvider({ children }) {
     signup,
     login,
     logout,
+    resendVerificationEmail,
+    refreshUser,
     loading
   };
 

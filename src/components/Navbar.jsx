@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import AboutSidePanel from "./AboutSidePanel";
 import { useAuth } from "../contexts/AuthContext";
+import logoIcon from "../assets/icons/logoIcon.png";
+import logoPNG from "../assets/icons/logoPNG.png";
 
 const Navbar = () => {
   const [showAboutPanel, setShowAboutPanel] = useState(false);
@@ -70,46 +72,45 @@ const Navbar = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full bg-white shadow-sm z-50">
+      <header className="fixed top-0 left-0 w-full bg-white shadow-md z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           {/* Logo */}
-          <div className="text-2xl font-bold text-black">Bantay Lahi</div>
+          <div className="likha-nav-brand text-[#800000] inline-flex flex-row items-center gap-1 whitespace-nowrap">
+            <img src={logoIcon} alt="LIKHA Icon" className="w-12 h-12 inline-block" />
+            <img src={logoPNG} alt="LIKHA Logo" className="h-10 inline-block object-contain" />
+          </div>
 
           {/* Navigation */}
           <nav className="flex items-center gap-6">
             <Link
               to="/"
-              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
+              className="px-4 py-2 font-medium text-black transition-all duration-200 rounded-full hover:bg-[#dc837d] hover:text-white"
             >
               Home
-              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
             </Link>
 
             <a
               href="#"
               onClick={toggleAboutPanel}
-              className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 no-un hover:bg-[#6998ab] hover:text-white rounded-full group"
+              className="px-4 py-2 font-medium text-black transition-all duration-200 no-un rounded-full hover:bg-[#dc837d] hover:text-white"
             >
               About Us
-              <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
             </a>
 
             {currentUser ? (
               <a
                 href="#"
                 onClick={() => setShowLogoutModal(true)}
-                className="relative px-3 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
+                className="px-4 py-2 font-medium text-black transition-all duration-200 rounded-full hover:bg-[#dc837d] hover:text-white"
               >
                 Log Out
-                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
               </a>
             ) : (
               <Link
                 to="/login"
-                className="relative px-5 py-1.5 font-medium text-black transition-all duration-200 hover:bg-[#6998ab] hover:text-white rounded-full group"
+                className="px-5 py-2 font-medium text-black transition-all duration-200 rounded-full border border-[#1f1f1f]/40 hover:bg-[#dc837d] hover:text-white"
               >
                 Login
-                <span className="absolute left-1/2 -bottom-1.5 w-3/5 h-0.5 bg-[#6998ab] rounded-full transform -translate-x-1/2 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center"></span>
               </Link>
             )}
           </nav>
@@ -128,22 +129,22 @@ const Navbar = () => {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6 sm:p-8 text-center">
-            <h3 className="text-xl sm:text-2xl font-bold text-[#123645] pb-4 leading-snug">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center px-4">
+          <div className="bg-[#f4cfcf] rounded-2xl shadow-lg w-full max-w-sm p-6 sm:p-8 text-center border-4 border-[#9d1d2c]">
+            <h3 className="text-xl sm:text-2xl font-extrabold text-[#1f1f1f] pb-6 leading-snug">
               Are you sure you want to Log Out?
             </h3>
 
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="bg-gray-300 text-[#123645] font-semibold px-6 py-2.5 rounded-full hover:bg-gray-400 transition duration-200 w-24"
+                className="bg-[#c48783] text-[#1f1f1f] font-bold px-6 py-2 rounded-sm transition duration-150 w-24 hover:bg-[#9d1d2c] hover:text-white"
               >
                 No
               </button>
               <button
                 onClick={handleLogout}
-                className="bg-[#2c526b] text-white font-semibold px-6 py-2.5 rounded-full hover:bg-[#1e3b50] transition duration-200 w-24"
+                className="bg-[#c48783] text-[#1f1f1f] font-bold px-6 py-2 rounded-sm transition duration-150 w-24 hover:bg-[#9d1d2c]/90  hover:text-white"
               >
                 Yes
               </button>

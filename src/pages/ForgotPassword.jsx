@@ -90,7 +90,7 @@ function ForgotPassword() {
     <div className="forgot-password-container">
       <div className="forgot-password-card">
         <div className="forgot-password-header">
-          <h1>Bantay Lahi</h1>
+          <h1 className="likha-brand">LIKHA</h1>
           <h2>Reset Password</h2>
           <p className="forgot-password-description">
             Enter your email address and we'll send you a link to reset your password.
